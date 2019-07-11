@@ -92,7 +92,7 @@ Quick example
 Documentation
 -------------
 
-TODO
+Documentation is available on readthedocs:`https://ceml.readthedocs.io/en/latest/<https://ceml.readthedocs.io/en/latest/>`_
 
 License
 -------
