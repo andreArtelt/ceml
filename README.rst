@@ -99,8 +99,8 @@ License
 
 MIT license - See `LICENSE.md <LICENSE.md>`_
 
-How can to cite?
-----------------
+How to cite?
+------------
     You can cite ceml by using the following BibTeX entry:
 
     .. code-block::
