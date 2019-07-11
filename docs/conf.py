@@ -24,7 +24,7 @@ author = 'André Artelt'
 
 # -- General configuration ---------------------------------------------------
 
-autodoc_mock_imports = ["torch", "tensorflow"]
+autodoc_mock_imports = ["torch", "tensorflow", "sklearn", "jax", "numpy"]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
