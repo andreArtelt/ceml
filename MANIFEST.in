@@ -1,0 +1,2 @@
+include ceml/VERSION
+include README.rst
