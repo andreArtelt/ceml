@@ -183,6 +183,11 @@ class DecisionTreeCounterfactual(SklearnCounterfactual):
 
             (x_cf, y_cf, delta) : triple if `return_as_dict` is False
         """
+        # Check if the prediction of the given input is already consistent with y_target
+        done = y_target if callable(y_target) else lambda y: y == y_target        
+        self.warn_if_already_done(x, done)
+
+        # Compute all counterfactual
         counterfactuals = self.compute_all_counterfactuals(x, y_target, features_whitelist, regularization)
 
         # Select the one with the smallest score

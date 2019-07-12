@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import logging
 import tensorflow as tf
 import numpy as np
+
 from ..backend.tensorflow.layer import create_tensor, create_mutable_tensor
 from ..backend.tensorflow.costfunctions import RegularizedCost
 from ..backend.tensorflow.optimizer import desc_to_optim
@@ -54,6 +56,10 @@ class TfCounterfactual(Counterfactual):
                 return tape.gradient(loss_value, z_).numpy()
         
         return loss, loss_npy, loss_grad_npy
+
+    def warn_if_already_done(self, x, done):
+        if done(self.model.predict(np.array([x]))):
+            logging.warning("The prediction of the input 'x' is already consistent with the requested prediction 'y_target' - It might not make sense to search for a counterfactual!")
 
     def __build_result_dict(self, x_cf, y_cf, delta):
         return {'x_cf': x_cf, 'y_cf': y_cf, 'delta': delta}
@@ -145,10 +151,13 @@ class TfCounterfactual(Counterfactual):
         # Hide the input in a wrapper if we can use a subset of features only
         input_wrapper, x_orig, _, grad_mask = self.wrap_input(features_whitelist, x, optimizer)
         
+        # Check if the prediction of the given input is already consistent with y_target
+        done = y_target if callable(y_target) else lambda y: y == y_target
+        self.warn_if_already_done(x, done)
+
         # Repeat for all C
         if not type(C) == list:
             C = [C]
-        done = y_target if callable(y_target) else lambda y: y == y_target
 
         for c in C:
             # Build loss

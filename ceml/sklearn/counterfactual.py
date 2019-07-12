@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-
 from abc import ABC, abstractmethod
+import logging
+
 from ..optim import InputWrapper, desc_to_optim
 from ..model import Counterfactual
 from ..backend.jax.costfunctions import RegularizedCost
@@ -69,6 +70,10 @@ class SklearnCounterfactual(Counterfactual, ABC):
         loss_grad = loss.grad(grad_mask)
 
         return loss, loss_grad
+
+    def warn_if_already_done(self, x, done):
+        if done(self.model.predict([x])[0]):
+            logging.warning("The prediction of the input 'x' is already consistent with the requested prediction 'y_target' - It might not make sense to search for a counterfactual!")
 
     def __build_result_dict(self, x_cf, y_cf, delta):
         return {'x_cf': x_cf, 'y_cf': y_cf, 'delta': delta}
@@ -155,11 +160,14 @@ class SklearnCounterfactual(Counterfactual, ABC):
         # Hide the input in a wrapper if we can use a subset of features only
         input_wrapper, x_orig, pred, grad_mask = self.wrap_input(features_whitelist, x, optimizer)
         
+        # Check if the prediction of the given input is already consistent with y_target
+        done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
+        self.warn_if_already_done(x, done)
+
         # Repeat for all C
         if not type(C) == list:
             C = [C]
-        done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
-        
+
         for c in C:
             # Build loss
             loss, loss_grad = self.build_loss(regularization, x_orig, y_target, pred, grad_mask, c, input_wrapper)

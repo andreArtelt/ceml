@@ -153,10 +153,13 @@ class RandomForestCounterfactual(SklearnCounterfactual):
         # Try to compute a counter factual for each of the models and use this counterfactual as a starting point
         x_start = self.__compute_initial_values(x, y_target, features_whitelist)
 
+        # Check if the prediction of the given input is already consistent with y_target
+        done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
+        self.warn_if_already_done(x, done)
+
         # Repeat for all C
         if not type(C) == list:
             C = [C]
-        done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
 
         for x0 in x_start:
             input_wrapper, x_orig, pred, grad_mask = self.wrap_input(features_whitelist, x0, optimizer)
