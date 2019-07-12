@@ -42,6 +42,8 @@ if __name__ == "__main__":
     # IMPORTANT: Enable eager execution
     tf.compat.v1.enable_eager_execution()
 
+    tf.random.set_random_seed(42)   # Fix random seed
+
     # Load data
     X, y = load_iris(True)
 
@@ -63,7 +65,7 @@ if __name__ == "__main__":
     features_whitelist = None
 
     # Compute counterfactual
-    optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=0.01)    # Init optimization algorithm
+    optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=1.0)    # Init optimization algorithm
     optimizer_args = {"max_iter": 1000}
 
     print("\nCompute counterfactual ....") 

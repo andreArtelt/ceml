@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import torch
+torch.manual_seed(424242)
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
