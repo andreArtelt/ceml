@@ -8,7 +8,7 @@ from .linearregression import LinearRegression
 from .knn import KNN
 from .lvq import LVQ
 from ..model import ModelWithLoss
-from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures
+from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures, Normalizer
 from ..backend.jax.costfunctions import CostFunctionDifferentiable, RegularizedCost
 from ..costfunctions import RegularizedCost as RegularizedCostNonDifferentiable
 from .utils import build_regularization_loss
@@ -95,6 +95,8 @@ class PipelineCounterfactual(SklearnCounterfactual):
     def wrap_model(self, model):
         if isinstance(model, sklearn.preprocessing.data.StandardScaler):
             return StandardScaler(model.mean_, model.scale_)
+        elif isinstance(model, sklearn.preprocessing.Normalizer):
+            return Normalizer()
         elif isinstance(model, sklearn.decomposition.PCA):
             return PCA(model.components_)
         elif isinstance(model, sklearn.preprocessing.PolynomialFeatures):
