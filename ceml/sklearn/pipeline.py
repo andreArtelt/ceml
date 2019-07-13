@@ -97,6 +97,8 @@ class PipelineCounterfactual(SklearnCounterfactual):
             return StandardScaler(model.mean_ if model.with_mean else 0, model.scale_ if model.with_std else 1)
         elif isinstance(model, sklearn.preprocessing.data.RobustScaler):
             return StandardScaler(model.center_  if model.with_centering else 0, model.scale_ if model.with_scaling else 1)
+        elif isinstance(model, sklearn.preprocessing.data.MaxAbsScaler):
+            return StandardScaler(0, model.scale_)
         elif isinstance(model, sklearn.preprocessing.data.MinMaxScaler):
             return MinMaxScaler(model.min_, model.scale_)
         elif isinstance(model, sklearn.preprocessing.Normalizer):
