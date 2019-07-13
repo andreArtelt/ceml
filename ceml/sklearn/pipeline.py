@@ -8,7 +8,7 @@ from .linearregression import LinearRegression
 from .knn import KNN
 from .lvq import LVQ
 from ..model import ModelWithLoss
-from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures, Normalizer
+from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures, Normalizer, MinMaxScaler
 from ..backend.jax.costfunctions import CostFunctionDifferentiable, RegularizedCost
 from ..costfunctions import RegularizedCost as RegularizedCostNonDifferentiable
 from .utils import build_regularization_loss
@@ -97,6 +97,8 @@ class PipelineCounterfactual(SklearnCounterfactual):
             return StandardScaler(model.mean_ if model.with_mean else 0, model.scale_ if model.with_std else 1)
         elif isinstance(model, sklearn.preprocessing.data.RobustScaler):
             return StandardScaler(model.center_  if model.with_centering else 0, model.scale_ if model.with_scaling else 1)
+        elif isinstance(model, sklearn.preprocessing.data.MinMaxScaler):
+            return MinMaxScaler(model.min_, model.scale_)
         elif isinstance(model, sklearn.preprocessing.Normalizer):
             return Normalizer()
         elif isinstance(model, sklearn.decomposition.PCA):
