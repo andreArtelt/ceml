@@ -4,7 +4,7 @@ sys.path.insert(0,'..')
 
 import tensorflow as tf
 tf.compat.v1.enable_eager_execution()
-tf.random.set_random_seed(42)
+tf.compat.v1.random.set_random_seed(42)
 
 import numpy as np
 from sklearn.datasets import load_iris
