@@ -77,6 +77,23 @@ class LMadCost(CostFunctionDifferentiableTf):
         return lmad(x, self.x_orig, self.mad) 
 
 
+class SquaredError(CostFunctionDifferentiableTf):
+    """
+    Squared error cost function.
+    """
+    def __init__(self, input_to_output, y_target):
+        self.y_target = y_target
+        self.input_to_output = input_to_output
+
+        super(SquaredError, self).__init__()
+    
+    def score_impl(self, x):
+        """
+        Computes the loss - squared error.
+        """
+        return l2(self.input_to_output(x), self.y_target)
+
+
 class NegLogLikelihoodCost(CostFunctionDifferentiableTf):
     """
     Negative-log-likelihood cost function.

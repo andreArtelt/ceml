@@ -79,7 +79,7 @@ class TfCounterfactual(Counterfactual):
         else:
             return x_cf, y_cf, delta
 
-    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization=None, C=1.0, optimizer="nelder-mead", optimizer_args=None, return_as_dict=True):
+    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization=None, C=1.0, optimizer="nelder-mead", optimizer_args=None, return_as_dict=True, done=None):
         """Computes a counterfactual of a given input `x`.
 
         Parameters
@@ -135,6 +135,16 @@ class TfCounterfactual(Counterfactual):
             If False, the results are returned as a triple.
 
             The default is True.
+        done : `callable`, optional
+            A callable that returns `True` if a counterfactual with a given output/prediction is accepted and `False` otherwise.
+
+            If `done` is None, the output/prediction of the counterfactual must match `y_target` exactly.
+
+            The default is None.
+
+            Note
+            ----
+            In case of a regression it might not always be possible to achieve a given output/prediction exactly.
 
         Returns
         -------
@@ -152,7 +162,7 @@ class TfCounterfactual(Counterfactual):
         input_wrapper, x_orig, _, grad_mask = self.wrap_input(features_whitelist, x, optimizer)
         
         # Check if the prediction of the given input is already consistent with y_target
-        done = y_target if callable(y_target) else lambda y: y == y_target
+        done = done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
         self.warn_if_already_done(x, done)
 
         # Repeat for all C
@@ -180,7 +190,7 @@ class TfCounterfactual(Counterfactual):
         raise Exception("No counterfactual found - Consider changing parameters 'C', 'regularization', 'features_whitelist', 'optimizer' and try again")
 
 
-def generate_counterfactual(model, x, y_target, features_whitelist=None, regularization=None, C=1.0, optimizer="nelder-mead", optimizer_args=None, return_as_dict=True):
+def generate_counterfactual(model, x, y_target, features_whitelist=None, regularization=None, C=1.0, optimizer="nelder-mead", optimizer_args=None, return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -238,6 +248,16 @@ def generate_counterfactual(model, x, y_target, features_whitelist=None, regular
         If False, the results are returned as a triple.
 
         The default is True.
+    done : `callable`, optional
+        A callable that returns `True` if a counterfactual with a given output/prediction is accepted and `False` otherwise.
+
+        If `done` is None, the output/prediction of the counterfactual must match `y_target` exactly.
+
+        The default is None.
+
+        Note
+        ----
+        In case of a regression it might not always be possible to achieve a given output/prediction exactly.
 
     Returns
     -------
@@ -248,4 +268,4 @@ def generate_counterfactual(model, x, y_target, features_whitelist=None, regular
     """
     cf = TfCounterfactual(model)
 
-    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, optimizer_args, return_as_dict)
+    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, optimizer_args, return_as_dict, done)
