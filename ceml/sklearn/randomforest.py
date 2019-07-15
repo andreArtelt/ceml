@@ -10,14 +10,14 @@ from .counterfactual import SklearnCounterfactual
 
 
 class EnsembleVotingCost(CostFunction):
-    """Loss function of an ensemble of classifier.
+    """Loss function of an ensemble of models.
 
-    The loss is the negative fraction of classifiers that predict the correct target class.
+    The loss is the negative fraction of models that predict the correct output.
 
     Parameters
     ----------
     models : `list(object)`
-        List of classifiers
+        List of models
     y_target : `int`, `float` or a callable that returns True if a given prediction is accepted.
         The requested prediction.
     input_wrapper : `callable`, optional
@@ -40,17 +40,17 @@ class EnsembleVotingCost(CostFunction):
 
 
 class RandomForest(ModelWithLoss):
-    """Class for rebuilding/wrapping the :class:`sklearn.ensemble.RandomForestClassifier` class.
+    """Class for rebuilding/wrapping the :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor` class.
 
     Parameters
     ----------
-    model : instance of :class:`sklearn.ensemble.RandomForestClassifier`
+    model : instance of :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor`
         The random forest model.
         
     Raises
     ------
     TypeError
-        If `model` is not an instance of :class:`sklearn.ensemble.RandomForestClassifier`
+        If `model` is not an instance of :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor`
     """
     def __init__(self, model):
         if not isinstance(model, sklearn.ensemble.RandomForestClassifier) and not isinstance(model, sklearn.ensemble.RandomForestRegressor):
@@ -80,19 +80,17 @@ class RandomForest(ModelWithLoss):
     def get_loss(self, y_target, input_wrapper=None):
         """Creates and returns a loss function.
 
-        Builds a negative-log-likehood cost function where the target is `y_target`.
-
         Parameters
         ----------
-        y_target : `int`
-            The target class.
+        y_target: `int`, `float` or a callable that returns True if a given prediction is accepted.
+            The requested prediction.
         input_wrapper : `callable`
             Converts the input (e.g. if we want to exclude some features/dimensions, we might have to include these missing features before applying any function to it).
         
         Returns
         -------
         :class:`ceml.sklearn.randomforest.EnsembleVotingCost`
-            Initialized loss function. Target label is `y_target`.
+            Initialized loss function. The target output is `y_target`.
         """
         return EnsembleVotingCost(self.model.estimators_, y_target, input_wrapper)
 
@@ -116,13 +114,13 @@ class RandomForestCounterfactual(SklearnCounterfactual):
         return loss, None
 
     def rebuild_model(self, model):
-        """Rebuilds a :class:`sklearn.ensemble.RandomForestClassifier` model.
+        """Rebuilds a :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor` model.
 
-        Converts a :class:`sklearn.ensemble.RandomForestClassifier` into a :class:`ceml.sklearn.randomforest.RandomForest`.
+        Converts a :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor` instance into a :class:`ceml.sklearn.randomforest.RandomForest` instance.
 
         Parameters
         ----------
-        model : instance of :class:`sklearn.ensemble.RandomForestClassifier`
+        model : instance of :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor`
             The `sklearn` random forest model. 
 
         Returns
@@ -185,7 +183,7 @@ def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=
 
     Parameters
     ----------
-    model : a :class:`sklearn.ensemble.RandomForestClassifier` instance.
+    model : a :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor` instance.
         The random forest model that is used for computing the counterfactual.
     x : `numpy.ndarray`
         The input `x` whose prediction has to be explained.
