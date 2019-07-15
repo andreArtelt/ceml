@@ -7,6 +7,7 @@ tf.compat.v1.enable_eager_execution()
 tf.compat.v1.random.set_random_seed(42)
 
 import numpy as np
+np.random.seed(42)
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score

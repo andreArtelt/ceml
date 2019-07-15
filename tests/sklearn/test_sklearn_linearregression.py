@@ -3,6 +3,7 @@ import sys
 sys.path.insert(0,'..')
 
 import numpy as np
+np.random.seed(42)
 import sklearn
 from sklearn.datasets import load_boston
 from sklearn.model_selection import train_test_split

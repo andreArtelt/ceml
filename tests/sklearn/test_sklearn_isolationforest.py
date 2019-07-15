@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+np.random.seed(42)
 from sklearn.ensemble import IsolationForest
 from sklearn.datasets import make_blobs
 
