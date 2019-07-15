@@ -8,3 +8,5 @@ _templates/
 .ipynb_checkpoints
 .vscode
 .pytest_cache
+.coverage*
+htmlcov/
