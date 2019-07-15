@@ -72,8 +72,8 @@ class RandomForest(ModelWithLoss):
         
         Returns
         -------
-        `int`
-            Predicted label.
+        `int` or `float`
+            Prediction.
         """
         return self.model.predict([x])[0]
     
