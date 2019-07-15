@@ -64,6 +64,13 @@ ceml.sklearn.randomforest
    :members:
    :show-inheritance:
 
+ceml.sklearn.isolationforest
+----------------------------
+
+.. automodule:: ceml.sklearn.isolationforest
+   :members:
+   :show-inheritance:
+
 ceml.sklearn.softmaxregression
 ------------------------------
 

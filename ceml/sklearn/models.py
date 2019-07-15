@@ -7,6 +7,7 @@ from .linearregression import linearregression_generate_counterfactual
 from .naivebayes import gaussiannb_generate_counterfactual
 from .decisiontree import decisiontree_generate_counterfactual
 from .randomforest import randomforest_generate_counterfactual
+from .isolationforest import isolationforest_generate_counterfactual
 from .knn import knn_generate_counterfactual
 from .lvq import lvq_generate_counterfactual
 from .pipeline import pipeline_generate_counterfactual
@@ -111,6 +112,8 @@ def generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l
         return decisiontree_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, return_as_dict=return_as_dict, done=done)
     elif isinstance(model, sklearn.ensemble.RandomForestClassifier) or isinstance(model, sklearn.ensemble.RandomForestRegressor):
         return randomforest_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict)
+    elif isinstance(model, sklearn.ensemble.IsolationForest):
+        return isolationforest_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict)
     elif isinstance(model, sklearn.neighbors.KNeighborsClassifier) or isinstance(model, sklearn.neighbors.KNeighborsRegressor):
         return knn_generate_counterfactual(model, x, y_target, dist=dist, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
     elif any([isinstance(model, t) for t in [sklearn_lvq.GlvqModel, sklearn_lvq.GmlvqModel, sklearn_lvq.LgmlvqModel, sklearn_lvq.RslvqModel, sklearn_lvq.MrslvqModel, sklearn_lvq.LmrslvqModel]]):
