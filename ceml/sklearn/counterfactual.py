@@ -183,5 +183,5 @@ class SklearnCounterfactual(Counterfactual, ABC):
         
         raise Exception("No counterfactual found - Consider changing parameters 'C', 'regularization', 'features_whitelist', 'optimizer' and try again")
     
-    def __call__(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True):
-        return self.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict)
+    def __call__(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+        return self.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)

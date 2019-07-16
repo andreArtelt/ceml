@@ -178,7 +178,7 @@ class RandomForestCounterfactual(SklearnCounterfactual):
         raise Exception("No counterfactual found - Consider changing parameters 'C', 'regularization', 'features_whitelist', 'optimizer' and try again")
 
 
-def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True):
+def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -225,6 +225,8 @@ def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=
         If False, the results are returned as a triple.
 
         The default is True.
+    done : `callable`, optional
+        Not used.
 
     Returns
     -------

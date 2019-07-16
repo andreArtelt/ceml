@@ -179,4 +179,4 @@ def softmaxregression_generate_counterfactual(model, x, y_target, features_white
     """
     cf = SoftmaxCounterfactual(model)
 
-    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict)
+    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
