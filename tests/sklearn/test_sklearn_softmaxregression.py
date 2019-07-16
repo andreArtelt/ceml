@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 
 from ceml.sklearn import generate_counterfactual
+from ceml.backend.jax.costfunctions import LMadCost 
 
 
 def test_softmaxregression():
@@ -26,10 +27,19 @@ def test_softmaxregression():
     x_orig = X_test[1:4][0,:]
     assert model.predict([x_orig]) == 2
 
+    # Create weighted manhattan distance cost function
+    md = np.median(X_train, axis=0)
+    mad = np.median(np.abs(X_train - md), axis=0)
+    regularization_mad = LMadCost(x_orig, mad)
+
     # Compute counterfactual
     features_whitelist = None
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer="bfgs", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization=regularization_mad, C=1.0, optimizer="bfgs", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 

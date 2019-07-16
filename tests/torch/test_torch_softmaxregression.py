@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 from ceml.torch import generate_counterfactual
-from ceml.backend.torch.costfunctions import NegLogLikelihoodCost
+from ceml.backend.torch.costfunctions import NegLogLikelihoodCost, LMadCost
 from ceml.model import ModelWithLoss
 
 
@@ -74,12 +74,23 @@ def test_softmaxregression():
     x_orig = X_test[1,:]
     assert model.predict(torch.from_numpy(np.array([x_orig]))).numpy() == 1
 
+    # Create weighted manhattan distance cost function
+    md = np.median(X_train, axis=0)
+    mad = np.median(np.abs(X_train - md), axis=0)
+    regularization_mad = LMadCost(torch.from_numpy(x_orig), torch.from_numpy(mad))
+
     # Compute counterfactual
     features_whitelist = None
 
     optimizer = "bfgs"
     optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+
+    optimizer = "bfgs"
+    optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization=regularization_mad, C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
 

@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 from ceml.tfkeras import generate_counterfactual
-from ceml.backend.tensorflow.costfunctions import NegLogLikelihoodCost
+from ceml.backend.tensorflow.costfunctions import NegLogLikelihoodCost, LMadCost
 from ceml.model import ModelWithLoss
 
 
@@ -61,12 +61,22 @@ def test_softmaxregression():
     x_orig = X_test[1,:]
     assert model.predict(np.array([x_orig])) == 1
 
+    # Create weighted manhattan distance cost function
+    md = np.median(X_train, axis=0)
+    mad = np.median(np.abs(X_train - md), axis=0)
+    regularization_mad = LMadCost(x_orig, mad)
+
     # Compute counterfactual
     features_whitelist = None
 
     optimizer = "bfgs"
     optimizer_args = {"max_iter": 1000}
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l1", C=0.01, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    optimizer = "bfgs"
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization=regularization_mad, C=0.01, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 
