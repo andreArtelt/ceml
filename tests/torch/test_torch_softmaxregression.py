@@ -84,7 +84,7 @@ def test_softmaxregression():
     assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
 
     optimizer = "nelder-mead"
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l1", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
 
@@ -109,7 +109,7 @@ def test_softmaxregression():
 
     optimizer = "bfgs"
     optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l1", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
