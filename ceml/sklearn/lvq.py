@@ -62,14 +62,14 @@ class LVQ(ModelWithLoss):
 
         # The model might have learned its own distance metric
         if isinstance(model, sklearn_lvq.GmlvqModel) or isinstance(model, sklearn_lvq.MrslvqModel):
-            self.dist_mat = create_tensor(np.dot(model.omega_, model.omega_))
+            self.dist_mat = create_tensor(np.dot(model.omega_.T, model.omega_))
         elif isinstance(model, sklearn_lvq.LgmlvqModel) or isinstance(model, sklearn_lvq.LmrslvqModel):
             if model.classwise == True:
-                self.omegas = [create_tensor(np.dot(omega, omega)) for omega in model.omegas_]
+                self.omegas = [create_tensor(np.dot(omega.T, omega)) for omega in model.omegas_]
                 self.classwise = True
                 self.dist_mats = None
             else:
-                self.dist_mats = [create_tensor(np.dot(omega, omega)) for omega in model.omegas_]
+                self.dist_mats = [create_tensor(np.dot(omega.T, omega)) for omega in model.omegas_]
                 self.classwise = False
 
         super(LVQ, self).__init__()
