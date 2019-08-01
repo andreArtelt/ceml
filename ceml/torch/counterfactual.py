@@ -121,10 +121,11 @@ class TorchCounterfactual(Counterfactual):
             `C` is ignored if no regularization is used (`regularization=None`).
 
             The default is 1.0
-        optimizer : `str`, optional
+        optimizer : `str` or class that is derived from :class:`torch.optim.Optimizer`, optional
             Name/Identifier of the optimizer that is used for computing the counterfactual.
-
             See :func:`ceml.optim.optimizer.desc_to_optim` for details.
+
+            As an alternative, any optimizer from PyTorch can be used - `optimizer` must be class that is derived from :class:`torch.optim.Optimizer`.
 
             The default is "nelder-mead".
         optimizer_args : `dict`, optional
@@ -241,12 +242,13 @@ def generate_counterfactual(model, x, y_target, device=torch.device('cpu'), feat
         If no regularization is used (`regularization=None`), `C` is ignored.
 
         The default is 1.0
-    optimizer : `str`, optional
-        Name/Identifier of the optimizer that is used for computing the counterfactual.
+    optimizer : `str` or class that is derived from :class:`torch.optim.Optimizer`, optional
+            Name/Identifier of the optimizer that is used for computing the counterfactual.
+            See :func:`ceml.optim.optimizer.desc_to_optim` for details.
 
-        See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+            As an alternative, any optimizer from PyTorch can be used - `optimizer` must be class that is derived from :class:`torch.optim.Optimizer`.
 
-        The default is "nelder-mead".
+            The default is "nelder-mead".
     optimizer_args : `dict`, optional
         Dictionary containing additional parameters for the optimization algorithm.
 
