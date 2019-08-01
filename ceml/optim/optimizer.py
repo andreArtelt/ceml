@@ -67,7 +67,7 @@ def desc_to_optim(desc, f, x0, f_grad=None, tol=None, max_iter=None):
 
     Supported descriptions:
 
-        - nelder-mead: *Gradient-free* Nelder-Mead optimizer (also called Simplex search algorithm)
+        - nelder-mead: *Gradient-free* Nelder-Mead optimizer (also called downhill simplex method)
         - powell: *Gradient-free* Powell optimizer
         - bfgs: BFGS optimizer
         - cg: Conjugate gradients optimizer
