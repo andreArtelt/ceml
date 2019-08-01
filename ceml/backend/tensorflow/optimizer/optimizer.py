@@ -20,7 +20,7 @@ class TfOptimizer(Optimizer):
         The loss that has to be minimized.
     x : `numpy.ndarray`
         The starting value of `x` - usually this is the original input whose prediction has to be explained..
-    optim : instance of `tf.train.Optimizer`
+    optim : instance of :class:`tf.train.Optimizer`
         Optimizer for minimizing the loss.
     tol : `float`, optional
         Tolerance for termination.
