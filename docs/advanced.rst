@@ -38,12 +38,15 @@ A complete example of using a custom loss for a linear regression model is given
 .. literalinclude:: examples/sklearn_customloss.py
     :linenos:
 
-Add a custom model to the sklearn pipeline
-++++++++++++++++++++++++++++++++++++++++++
-
-TODO
-
 Add a custom optimizer
 ++++++++++++++++++++++
 
-TODO
+We can use a custom optimization method by:
+
+    1. Dervice a new class from :class:`ceml.optim.optimizer.Optimizer` and implement the custom optimization method.
+    2. Create a new instance of this class and pass it as the argument for the `optimizer` parameter to the function :func:`ceml.sklearn.models.generate_counterfactual` (or any other function that computes a counterfactual).
+
+A complete example of using a custom optimization method for computing counterfactuals from a logistic regression model is given below:
+
+.. literalinclude:: examples/sklearn_customoptimizer.py
+    :linenos:
