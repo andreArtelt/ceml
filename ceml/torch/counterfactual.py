@@ -5,7 +5,7 @@ import numpy as np
 
 from ..backend.torch.layer import create_tensor
 from ..backend.torch.costfunctions import RegularizedCost
-from ..backend.torch.optimizer import desc_to_optim
+from ..backend.torch.optimizer import prepare_optim
 from ..model import ModelWithLoss, Counterfactual
 from .utils import build_regularization_loss, wrap_input
 
@@ -76,7 +76,7 @@ class TorchCounterfactual(Counterfactual):
         max_iter = None if optimizer_args is None or "max_iter" not in optimizer_args else optimizer_args["max_iter"]
         optimizer_args = None if optimizer_args is None or "args" not in optimizer_args else optimizer_args["args"]
         
-        solver = desc_to_optim(optimizer, optimizer_args, lr_scheduler, lr_scheduler_args, loss, loss_npy, loss_grad_npy, x_orig, self.model, tol, max_iter, grad_mask, self.device)
+        solver = prepare_optim(optimizer, optimizer_args, lr_scheduler, lr_scheduler_args, loss, loss_npy, loss_grad_npy, x_orig, self.model, tol, max_iter, grad_mask, self.device)
 
         x_cf = input_wrapper(solver())
         y_cf = self.model.predict(create_tensor(x_cf, self.device), dim=0).numpy()
@@ -142,6 +142,10 @@ class TorchCounterfactual(Counterfactual):
             If `optimizer_args` is None or if some parameters are missing, default values are used.
 
             The default is None.
+
+            Note
+            ----
+            The parameters `tol` and `max_iter` are passed to all optimization algorithms. Whereas the other parameters are only passed to PyTorch optimizers.
         return_as_dict : `boolean`, optional
             If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
             If False, the results are returned as a triple.
@@ -263,6 +267,10 @@ def generate_counterfactual(model, x, y_target, device=torch.device('cpu'), feat
         If `optimizer_args` is None or if some parameters are missing, default values are used.
 
         The default is None.
+
+        Note
+        ----
+        The parameters `tol` and `max_iter` are passed to all optimization algorithms. Whereas the other parameters are only passed to PyTorch optimizers.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.

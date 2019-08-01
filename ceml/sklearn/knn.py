@@ -180,10 +180,11 @@ def knn_generate_counterfactual(model, x, y_target, features_whitelist=None, dis
         `C` is ignored if no regularization is used (`regularization=None`).
 
         The default is 1.0
-    optimizer : `str`, optional
+    optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
         Name/Identifier of the optimizer that is used for computing the counterfactual.
-
         See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+
+        As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
         The default is "nelder-mead".
     return_as_dict : `boolean`, optional

@@ -5,7 +5,7 @@ import numpy as np
 
 from ..backend.tensorflow.layer import create_tensor, create_mutable_tensor
 from ..backend.tensorflow.costfunctions import RegularizedCost
-from ..backend.tensorflow.optimizer import desc_to_optim
+from ..backend.tensorflow.optimizer import prepare_optim
 from ..model import ModelWithLoss, Counterfactual
 from .utils import build_regularization_loss, wrap_input
 
@@ -68,7 +68,7 @@ class TfCounterfactual(Counterfactual):
         tol = None if optimizer_args is None or "tol" not in optimizer_args else optimizer_args["tol"]
         max_iter = None if optimizer_args is None or "max_iter" not in optimizer_args else optimizer_args["max_iter"]
         
-        solver = desc_to_optim(optimizer, loss, loss_npy, loss_grad_npy, x_orig, self.model, tol, max_iter, grad_mask)
+        solver = prepare_optim(optimizer, loss, loss_npy, loss_grad_npy, x_orig, self.model, tol, max_iter, grad_mask)
 
         x_cf = input_wrapper(solver())
         y_cf = self.model.predict(np.array([x_cf]))

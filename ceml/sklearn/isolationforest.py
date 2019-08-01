@@ -171,10 +171,10 @@ class IsolationForestCounterfactual(SklearnCounterfactual):
         
         return counterfactuals
 
-    """
-    Compute initial value for the optimizer.
-    """
     def __compute_initial_values(self, x, y_target, features_whitelist, regularization):
+        """
+        Compute initial value for the optimizer.
+        """
         result = [x]
         
         for m in self.model.estimators_:
@@ -183,6 +183,77 @@ class IsolationForestCounterfactual(SklearnCounterfactual):
         return result
 
     def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+        """Computes a counterfactual of a given input `x`.
+
+        Parameters
+        ----------
+        x : `numpy.ndarray`
+            The input `x` whose prediction has to be explained.
+        y_target : `int` or `float`
+            The desired prediction of the counterfactual.
+        feature_whitelist : `list(int)`, optional
+            List of feature indices (dimensions of the input space) that can be used when computing the counterfactual.
+            
+            If `feature_whitelist` is None, all features can be used.
+
+            The default is None.
+        regularization : `str` or :class:`ceml.costfunctions.costfunctions.CostFunction`, optional
+            Regularizer of the counterfactual. Penalty for deviating from the original input `x`.
+            Supported values:
+            
+                - l1: Penalizes the absolute deviation.
+                - l2: Penalizes the squared deviation.
+
+            `regularization` can be a description of the regularization, an instance of :class:`ceml.costfunctions.costfunctions.CostFunction` (or :class:`ceml.costfunctions.costfunctions.DifferentiableCostFunction` if the cost function is differentiable) or None if no regularization is requested.
+
+            If `regularization` is None, no regularization is used.
+
+            The default is "l1".
+        C : `float` or `list(float)`, optional
+            The regularization strength. If `C` is a list, all values in `C` are tried and as soon as a counterfactual is found, this counterfactual is returned and no other values of `C` are tried.
+
+            If no regularization is used (`regularization=None`), `C` is ignored.
+
+            The default is 1.0
+        optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
+            Name/Identifier of the optimizer that is used for computing the counterfactual.
+            See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+
+            As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
+
+            The default is "nelder-mead".
+
+            Note
+            ----
+            The cost function of an isolation forest model is not differentiable - we can not use a gradient-based optimization algorithm.
+        return_as_dict : `boolean`, optional
+            If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
+            If False, the results are returned as a triple.
+
+            The default is True.
+        done : `callable`, optional
+            A callable that returns `True` if a counterfactual with a given output/prediction is accepted and `False` otherwise.
+
+            If `done` is None, the output/prediction of the counterfactual must match `y_target` exactly.
+
+            The default is None.
+
+            Note
+            ----
+            In case of a regression it might not always be possible to achieve a given output/prediction exactly.
+
+        Returns
+        -------
+        `dict` or `triple`
+            A dictionary where the counterfactual is stored in 'x_cf', its prediction in 'y_cf' and the changes to the original input in 'delta'.
+
+            (x_cf, y_cf, delta) : triple if `return_as_dict` is False
+        
+        Raises
+        ------
+        Exception
+            If no counterfactual was found.
+        """
         if isinstance(regularization, str):
             regularization = desc_to_regcost(regularization, x, None)
         elif not callable(regularization):
@@ -254,12 +325,17 @@ def isolationforest_generate_counterfactual(model, x, y_target, features_whiteli
         `C` is ignored if no regularization is used (`regularization=None`).
 
         The default is 1.0
-    optimizer : `str`, optional
+    optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
         Name/Identifier of the optimizer that is used for computing the counterfactual.
-
         See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
 
+        As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
+
         The default is "nelder-mead".
+
+        Note
+        ----
+        The cost function of an isolation forest model is not differentiable - we can not use a gradient-based optimization algorithm.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.

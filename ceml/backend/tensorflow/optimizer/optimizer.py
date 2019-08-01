@@ -4,40 +4,62 @@ import numpy as np
 import inspect
 from ..layer import create_tensor, create_mutable_tensor
 from ....optim import Optimizer
-from ....optim import desc_to_optim as desc_to_optim_scipy
+from ....optim import prepare_optim as desc_to_optim_scipy
 
 
 class TfOptimizer(Optimizer):
     """Wrapper for a tensorflow optimization algorithm.
 
     The :class:`TfOptimizer` provides an interface for wrapping an arbitrary tensorflow optimization algorithm (see :class:`tf.train.Optimizer`) and minimizing a given loss function.
-
-    Parameters
-    ----------
-    model : `callable` or instance of :class:`tf.keras.Model`
-        The model that is to be used.
-    loss : instance of :class:`ceml.backend.tensorflow.costfunctions.RegularizedCost`
-        The loss that has to be minimized.
-    x : `numpy.ndarray`
-        The starting value of `x` - usually this is the original input whose prediction has to be explained..
-    optim : instance of :class:`tf.train.Optimizer`
-        Optimizer for minimizing the loss.
-    tol : `float`, optional
-        Tolerance for termination.
-
-        The default is 0.0
-    max_iter : `int`, optional
-        Maximum number of iterations.
-
-        The default is 1.
-    grad_mask : `numpy.array`, optional
-        Mask that is multiplied element wise on top of the gradient - can be used to hold some dimensions constant. 
-
-        If `grad_mask` is None, no gradient mask is used.
-
-        The default is None.
     """
-    def __init__(self, model, loss, x, optim, tol=None, max_iter=1, grad_mask=None):
+    def __init__(self):
+        self.model = None
+        self.loss = None
+        self.tol = None
+        self.max_iter = None
+
+        self.x = None
+
+        self.optim = None
+
+        self.grad_mask = None
+
+        super(TfOptimizer, self).__init__()
+    
+    def init(self, model, loss, x, optim, tol=None, max_iter=1, grad_mask=None):
+        """
+        Initializes all parameters.
+
+        Parameters
+        ----------
+        model : `callable` or instance of :class:`tf.keras.Model`
+            The model that is to be used.
+        loss : instance of :class:`ceml.backend.tensorflow.costfunctions.RegularizedCost`
+            The loss that has to be minimized.
+        x : `numpy.ndarray`
+            The starting value of `x` - usually this is the original input whose prediction has to be explained..
+        optim : instance of :class:`tf.train.Optimizer`
+            Optimizer for minimizing the loss.
+        tol : `float`, optional
+            Tolerance for termination.
+
+            The default is 0.0
+        max_iter : `int`, optional
+            Maximum number of iterations.
+
+            The default is 1.
+        grad_mask : `numpy.array`, optional
+            Mask that is multiplied element wise on top of the gradient - can be used to hold some dimensions constant. 
+
+            If `grad_mask` is None, no gradient mask is used.
+
+            The default is None.
+        
+        Raises
+        ------
+        TypeError
+            If the type of `loss` or `model` is not correct.
+        """
         if not callable(model):
             raise TypeError("model must be callable")
         if not callable(loss):
@@ -56,9 +78,10 @@ class TfOptimizer(Optimizer):
             self.grad_mask = create_tensor(grad_mask)
         else:
             self.grad_mask = create_tensor(np.ones_like(x))
-
-        super(TfOptimizer, self).__init__()
     
+    def is_grad_based(self):
+        return True
+
     def __loss_grad(self):
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(self.x)
@@ -86,10 +109,12 @@ class TfOptimizer(Optimizer):
         return self.minimize()
 
 
-def desc_to_optim(optimizer, loss, loss_npy, loss_grad_npy, x_orig, model, tol, max_iter, grad_mask):
-    if isinstance(optimizer, str):
+def prepare_optim(optimizer, loss, loss_npy, loss_grad_npy, x_orig, model, tol, max_iter, grad_mask):
+    if isinstance(optimizer, str) or isinstance(optimizer, Optimizer):
         return desc_to_optim_scipy(optimizer, loss_npy, x_orig, loss_grad_npy, tol, max_iter)
     elif isinstance(optimizer, tf.compat.v1.train.Optimizer):
-        return TfOptimizer(model, loss, x_orig, optimizer, tol, max_iter, grad_mask)
+        optim = TfOptimizer()
+        optim.init(model, loss, x_orig, optimizer, tol, max_iter, grad_mask)
+        return optim
     else:
         raise TypeError("Invalid type of argument 'optimizer'.\n'optimizer' has to be a string or the name of a class that is derived from tf.train.Optimizer")

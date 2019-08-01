@@ -9,10 +9,38 @@ np.random.seed(42)
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from scipy.optimize import minimize
 
 from ceml.torch import generate_counterfactual
 from ceml.backend.torch.costfunctions import NegLogLikelihoodCost, LMadCost
 from ceml.model import ModelWithLoss
+from ceml.optim import Optimizer
+
+
+# Custom optimization method that simply calls the BFGS optimizer from scipy
+class MyOptimizer(Optimizer):
+    def __init__(self):
+        self.f = None
+        self.f_grad = None
+        self.x0 = None
+        self.tol = None
+        self.max_iter = None
+
+        super(MyOptimizer, self).__init__()
+    
+    def init(self, f, f_grad, x0, tol=None, max_iter=None):
+        self.f = f
+        self.f_grad = f_grad
+        self.x0 = x0
+        self.tol = tol
+        self.max_iter = max_iter
+
+    def is_grad_based(self):
+        return True
+    
+    def __call__(self):
+        optimum = minimize(fun=self.f, x0=self.x0, jac=self.f_grad, tol=self.tol, options={'maxiter': self.max_iter}, method="BFGS")
+        return np.array(optimum["x"])
 
 
 def test_softmaxregression():
@@ -85,6 +113,10 @@ def test_softmaxregression():
     optimizer = "bfgs"
     optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=MyOptimizer(), optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
 

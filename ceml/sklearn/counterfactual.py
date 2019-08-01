@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 import logging
 
-from ..optim import InputWrapper, desc_to_optim
+from ..optim import InputWrapper, prepare_optim
 from ..model import Counterfactual
 from ..backend.jax.costfunctions import RegularizedCost
 from .utils import build_regularization_loss, wrap_input
@@ -79,7 +79,7 @@ class SklearnCounterfactual(Counterfactual, ABC):
         return {'x_cf': x_cf, 'y_cf': y_cf, 'delta': delta}
 
     def compute_counterfactual_ex(self, x, loss, x0, loss_grad, optimizer, input_wrapper, return_as_dict):
-        solver = desc_to_optim(optimizer, loss, x0, loss_grad)
+        solver = prepare_optim(optimizer, loss, x0, loss_grad)
 
         x_cf = input_wrapper(solver())
         y_cf = self.model.predict([x_cf])[0]
@@ -123,10 +123,11 @@ class SklearnCounterfactual(Counterfactual, ABC):
             If no regularization is used (`regularization=None`), `C` is ignored.
 
             The default is 1.0
-        optimizer : `str`, optional
+        optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
             Name/Identifier of the optimizer that is used for computing the counterfactual.
-
             See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+
+            As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
             The default is "nelder-mead".
         return_as_dict : `boolean`, optional

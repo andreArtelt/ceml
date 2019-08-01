@@ -8,9 +8,37 @@ import sklearn
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from scipy.optimize import minimize
 
 from ceml.sklearn import generate_counterfactual
+from ceml.optim import Optimizer
 from ceml.backend.jax.costfunctions import LMadCost 
+
+
+# Custom optimization method that simply calls the BFGS optimizer from scipy
+class MyOptimizer(Optimizer):
+    def __init__(self):
+        self.f = None
+        self.f_grad = None
+        self.x0 = None
+        self.tol = None
+        self.max_iter = None
+
+        super(MyOptimizer, self).__init__()
+    
+    def init(self, f, f_grad, x0, tol=None, max_iter=None):
+        self.f = f
+        self.f_grad = f_grad
+        self.x0 = x0
+        self.tol = tol
+        self.max_iter = max_iter
+
+    def is_grad_based(self):
+        return True
+    
+    def __call__(self):
+        optimum = minimize(fun=self.f, x0=self.x0, jac=self.f_grad, tol=self.tol, options={'maxiter': self.max_iter}, method="BFGS")
+        return np.array(optimum["x"])
 
 
 def test_softmaxregression():
@@ -36,6 +64,10 @@ def test_softmaxregression():
     features_whitelist = None
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer="bfgs", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer=MyOptimizer(), return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 
