@@ -149,7 +149,7 @@ def prepare_optim(optim, f, x0, f_grad=None, tol=None, max_iter=None):
         else:
             raise ValueError(f"Invalid value of 'optim'.\n'optim' has to be 'nelder-mead', 'powell', 'cg' or 'bfgs' but not '{optim}'")
     elif isinstance(optim, Optimizer):
-        args = {'f': f, 'x0': x0, 'f_grad': f_grad, 'tol': tol, 'max_iter': max_iter}
+        args = {'f': f, 'x0': x0, 'tol': tol, 'max_iter': max_iter}
         if is_optimizer_grad_based(optim):
             args['f_grad'] = f_grad
 
