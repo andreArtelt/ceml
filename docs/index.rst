@@ -4,7 +4,7 @@ Welcome to ceml's documentation!
 Counterfactuals for Explaining Machine Learning models - ceml
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-ceml is a Python toolbox for computing counterfactuals. Counterfactuals can be use to explain the predictions of machine learing models.
+ceml is a Python toolbox for computing counterfactuals. Counterfactuals can be used to explain the predictions of machine learing models.
 
 It supports many common machine learning frameworks:
 
