@@ -14,3 +14,10 @@ ceml.optimizer.optimizer
 .. automodule:: ceml.optim.optimizer
    :members:
    :show-inheritance:
+
+ceml.optimizer.ga
+-----------------
+
+.. automodule:: ceml.optim.ga
+   :members:
+   :show-inheritance:
