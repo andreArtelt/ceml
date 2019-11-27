@@ -12,7 +12,7 @@ from sklearn.linear_model import Lasso
 from ceml.sklearn import generate_counterfactual
 
 
-def test_softmaxregression():
+def test_linearregression():
     # Load data
     X, y = load_boston(True)
 

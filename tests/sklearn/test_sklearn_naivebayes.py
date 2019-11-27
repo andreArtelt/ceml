@@ -12,7 +12,7 @@ from sklearn.naive_bayes import GaussianNB
 from ceml.sklearn import generate_counterfactual
 
 
-def test_softmaxregression():
+def test_gaussiannaivebayes():
     # Load data
     X, y = load_iris(True)
 
