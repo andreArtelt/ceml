@@ -17,4 +17,7 @@ def normal_distribution(x, mean, variance):
     return npx.exp(-.5 * npx.square(x - mean) / variance) / npx.sqrt(2. * npx.pi * variance)
 
 def log_normal_distribution(x, mean, variance):
-    return -.5 * npx.square(x - mean) / variance - 0.5 * (2. + npx.pi + variance)
+    return -.5 * npx.square(x - mean) / variance - .5 * (2. + npx.pi + variance)
+
+def log_multivariate_normal(x, mean, sigma_inv, k):
+    return .5 * npx.log(npx.linalg.det(sigma_inv)) - .5 * k * npx.log(2. * npx.pi) - .5 * npx.dot(x - mean, npx.dot(sigma_inv, (x - mean)))
