@@ -21,3 +21,10 @@ ceml.optimizer.ga
 .. automodule:: ceml.optim.ga
    :members:
    :show-inheritance:
+
+ceml.optimizer.cvx
+------------------
+
+.. automodule:: ceml.optim.cvx
+   :members:
+   :show-inheritance:
