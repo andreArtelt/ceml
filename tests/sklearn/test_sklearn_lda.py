@@ -4,6 +4,7 @@ sys.path.insert(0,'..')
 
 import numpy as np
 np.random.seed(42)
+import pytest
 import sklearn
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
@@ -84,3 +85,8 @@ def test_lda():
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
+
+    # Other stuff
+    from ceml.sklearn import LdaCounterfactual
+    with pytest.raises(TypeError):
+        LdaCounterfactual(sklearn.linear_model.LogisticRegression())

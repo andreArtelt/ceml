@@ -4,12 +4,14 @@ sys.path.insert(0,'..')
 
 import numpy as np
 np.random.seed(42)
+import pytest
 import sklearn
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn_lvq import GlvqModel, GmlvqModel, LgmlvqModel
 
 from ceml.sklearn import generate_counterfactual
+from ceml.sklearn import LVQ as LvqCf
 
 
 def test_glvq():
@@ -80,6 +82,10 @@ def test_glvq():
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
+
+    # Other stuff
+    with pytest.raises(TypeError):
+        LvqCf(sklearn.linear_model.LogisticRegression())
 
 
 def test_gmlvq():

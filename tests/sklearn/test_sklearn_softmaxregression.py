@@ -4,6 +4,7 @@ sys.path.insert(0,'..')
 
 import numpy as np
 np.random.seed(42)
+import pytest
 import sklearn
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
@@ -157,3 +158,11 @@ def test_softmaxregression():
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
+
+    # Other stuff
+    from ceml.sklearn import SoftmaxCounterfactual
+    with pytest.raises(TypeError):
+        SoftmaxCounterfactual(sklearn.linear_model.LinearRegression())
+    
+    with pytest.raises(ValueError):
+        SoftmaxCounterfactual(LogisticRegression(multi_class="ovr"))

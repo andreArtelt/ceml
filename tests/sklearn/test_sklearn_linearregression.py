@@ -4,6 +4,7 @@ sys.path.insert(0,'..')
 
 import numpy as np
 np.random.seed(42)
+import pytest
 import sklearn
 from sklearn.datasets import load_boston
 from sklearn.model_selection import train_test_split
@@ -88,3 +89,8 @@ def test_linearregression():
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(np.array([x_cf])))
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
+
+    # Other stuff
+    from ceml.sklearn import LinearRegressionCounterfactual
+    with pytest.raises(TypeError):
+        LinearRegressionCounterfactual(sklearn.naive_bayes.GaussianNB())

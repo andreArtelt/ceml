@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 np.random.seed(42)
+import pytest
+import sklearn
 from sklearn.ensemble import IsolationForest
 from sklearn.datasets import make_blobs
 
@@ -32,3 +34,15 @@ def test_isolationforest():
     x_cf, y_cf, _ = generate_counterfactual(model, x, y_target=y_target, return_as_dict=False)
     assert y_cf == y_target
     assert model.predict(np.array([x_cf])) == y_target
+
+    cf = generate_counterfactual(model, x, y_target=y_target, return_as_dict=True)
+    assert cf["y_cf"] == y_target
+    assert model.predict(np.array([cf["x_cf"]])) == y_target
+
+    # Other stuff
+    from ceml.sklearn import IsolationForest as IsolationForestCf
+    model_cf = IsolationForestCf(model)
+    assert model.predict([x]) == model_cf.predict(x)
+
+    with pytest.raises(TypeError):
+        IsolationForestCf(sklearn.linear_model.LogisticRegression())

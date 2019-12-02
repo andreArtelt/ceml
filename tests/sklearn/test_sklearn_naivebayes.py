@@ -4,6 +4,7 @@ sys.path.insert(0,'..')
 
 import numpy as np
 np.random.seed(42)
+import pytest
 import sklearn
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
@@ -114,3 +115,8 @@ def test_gaussiannaivebayes():
     assert y_cf == 0
     print(model.predict_proba(np.array([x_cf])))
     assert model.predict(np.array([x_cf])) == 0
+
+    # Other stuff
+    from ceml.sklearn import GaussianNbCounterfactual
+    with pytest.raises(TypeError):
+        GaussianNbCounterfactual(sklearn.linear_model.LogisticRegression())
