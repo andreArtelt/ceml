@@ -166,16 +166,14 @@ class CQPHelper(ConvexQuadraticProgram):
         Omega = self.mymodel._get_omega()
         p_i = self.mymodel.prototypes[self.target_prototype]
 
-        G = []
-        b = np.zeros(len(self.other_prototypes))
-        k = 0
+        results = []
         for k in range(len(self.other_prototypes)):
             p_j = self.other_prototypes[k]
-            G.append(.5 * np.dot(Omega, p_j - p_i))
-            b[k] = -.5 * (np.dot(p_i, np.dot(Omega, p_i)) - np.dot(p_j, np.dot(Omega, p_j)))
-        G = np.array(G)
-        
-        return [G @ var_x <= b + self.epsilon]
+            qj = .5 * np.dot(Omega, p_j - p_i)
+            bj = -.5 * (np.dot(p_i, np.dot(Omega, p_i)) - np.dot(p_j, np.dot(Omega, p_j)))
+            results.append(qj.T @ var_x + bj + self.epsilon <= 0)
+
+        return results
 
     def solve(self, target_prototype, features_whitelist=None):
         self.target_prototype = target_prototype
@@ -254,7 +252,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
 
     def _build_solve_dcqp(self, x_orig, y_target, target_prototype_id, other_prototypes, features_whitelist, regularization):
         p_i = self.mymodel.prototypes[target_prototype_id]
-        o_i = self.mymodel.omegas[target_prototype_id]
+        o_i = self.mymodel.dist_mats[target_prototype_id] if not self.mymodel.classwise else self.mymodel.omegas[y_target]
         ri = .5 * np.dot(p_i, np.dot(o_i, p_i))
         qi = .5 * np.dot(o_i, p_i)
 
@@ -274,7 +272,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         r_i = []
         for j in other_prototypes:
             p_j = self.mymodel.prototypes[j]
-            o_j = self.mymodel.omegas[j]
+            o_j = self.mymodel.omegas[self.mymodel.labels[j]] if self.mymodel.classwise else self.mymodel.dist_mats[j]
 
             q =  .5 * np.dot(o_j, p_j) - qi
             r = ri - .5 * np.dot(p_j, np.dot(o_j, p_j))
@@ -286,7 +284,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         
         self.build_program(self.model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=features_whitelist, mad=None if regularization != "l1" else np.ones(self.mymodel.dim))
 
-        return super().solve(x0=p_i, tao=1.2, tao_max=100, mu=1.5)
+        return DCQP.solve(self, x0=p_i, tao=1.2, tao_max=100, mu=1.5)
 
     def _compute_counterfactual_via_dcqp(self, x_orig, y_target, features_whitelist, regularization):
         xcf = None
@@ -315,8 +313,8 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
                     if dist(xcf_) < xcf_dist:
                         xcf = xcf_
                         xcf_dist = dist(xcf_)
-            except:
-                pass
+            except Exception as ex:
+                logging.debug(str(ex))
     
         if xcf is None:
             # It might happen that the solver (for a specific set of parameter values) does not find a counterfactual, although the feasible region is always non-empty
@@ -325,7 +323,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
 
         return xcf
 
-    def solve(self, x_orig, y_target, features_whitelist, regularization, return_as_dict):
+    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
         xcf = None
         if isinstance(self.model, sklearn_lvq.LgmlvqModel) or isinstance(self.model, sklearn_lvq.LmrslvqModel):
             xcf = self._compute_counterfactual_via_dcqp(x_orig, y_target, features_whitelist, regularization)
