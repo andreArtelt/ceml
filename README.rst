@@ -121,6 +121,7 @@ Third party components
     - `numpy <https://github.com/numpy/numpy>`_
     - `scipy <https://github.com/scipy/scipy>`_
     - `jax <https://github.com/google/jax>`_
+    - `cvxpy <https://github.com/cvxgrp/cvxpy>`_
     - `scikit-learn <https://github.com/scikit-learn/scikit-learn>`_
     - `sklearn-lvq <https://github.com/MrNuggelz/sklearn-lvq>`_
     - `PyTorch <https://github.com/pytorch/pytorch>`_
