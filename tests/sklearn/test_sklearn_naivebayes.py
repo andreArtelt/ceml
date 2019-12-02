@@ -29,6 +29,14 @@ def test_gaussiannaivebayes():
     # Compute counterfactual
     features_whitelist = None
 
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+    
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer="bfgs", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
@@ -47,6 +55,16 @@ def test_gaussiannaivebayes():
 
 
     features_whitelist = [0, 1, 2]
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+    assert all([True if i in features_whitelist else delta[i] <= 1e-5 for i in range(x_orig.shape[0])])
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+    assert all([True if i in features_whitelist else delta[i] <= 1e-5 for i in range(x_orig.shape[0])])
+
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer="bfgs", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
@@ -66,3 +84,33 @@ def test_gaussiannaivebayes():
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
+
+    # Test binary case
+    X, y = load_iris(True)
+    idx = y != 2
+    X, y = X[idx, :], y[idx]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
+
+    model = GaussianNB()
+    model.fit(X_train, y_train)
+
+    x_orig = X_test[1:4][0,:]
+    print(model.predict_proba(np.array([x_orig])))
+    assert model.predict([x_orig]) == 0
+
+    features_whitelist = None
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=1, features_whitelist=features_whitelist, optimizer="mp", return_as_dict=False)
+    assert y_cf == 1
+    print(model.predict_proba(np.array([x_cf])))
+    assert model.predict(np.array([x_cf])) == 1
+
+    x_orig = X_test[0,:]
+    print(model.predict_proba(np.array([x_orig])))
+    assert model.predict([x_orig]) == 1
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, optimizer="mp", return_as_dict=False)
+    assert y_cf == 0
+    print(model.predict_proba(np.array([x_cf])))
+    assert model.predict(np.array([x_cf])) == 0

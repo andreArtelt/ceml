@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import sklearn.ensemble
 
 from .decisiontree import DecisionTreeCounterfactual
@@ -142,8 +143,8 @@ class RandomForestCounterfactual(SklearnCounterfactual):
         for m in self.model.estimators_:
             try:
                 result += DecisionTreeCounterfactual(m).compute_all_counterfactuals(x, y_target, features_whitelist=features_whitelist)
-            except:
-                pass
+            except Exception as ex:
+                logging.debug(str(ex))
         
         return result
 
@@ -155,7 +156,7 @@ class RandomForestCounterfactual(SklearnCounterfactual):
         x : `numpy.ndarray`
             The input `x` whose prediction has to be explained.
         y_target : `int` or `float`
-            The desired prediction of the counterfactual.
+            The requested prediction of the counterfactual.
         feature_whitelist : `list(int)`, optional
             List of feature indices (dimensions of the input space) that can be used when computing the counterfactual.
             
@@ -182,7 +183,7 @@ class RandomForestCounterfactual(SklearnCounterfactual):
             The default is 1.0
         optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
             Name/Identifier of the optimizer that is used for computing the counterfactual.
-            See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+            See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
             As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
@@ -287,7 +288,7 @@ def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=
         The default is 1.0
     optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
         Name/Identifier of the optimizer that is used for computing the counterfactual.
-        See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+        See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 

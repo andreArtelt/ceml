@@ -1,52 +1,54 @@
 # -*- coding: utf-8 -*-
-import sklearn.linear_model
+import jax.numpy as npx
 import numpy as np
+import cvxpy as cp
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-from ..backend.jax.layer import create_tensor, affine, softmax
+from ..backend.jax.layer import log_multivariate_normal, create_tensor
 from ..backend.jax.costfunctions import NegLogLikelihoodCost
 from ..model import ModelWithLoss
 from .counterfactual import SklearnCounterfactual
 from ..optim import MathematicalProgram, ConvexQuadraticProgram
 
 
-class SoftmaxRegression(ModelWithLoss):
-    """Class for rebuilding/wrapping the :class:`sklearn.linear_model.LogisticRegression` class.
+class Lda(ModelWithLoss):
+    """Class for rebuilding/wrapping the :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis` class.
 
-    The :class:`SoftmaxRegression` class rebuilds a softmax regression model from a given weight vector and intercept.
+    The :class:`Lda` class rebuilds a lda model from a given parameters.
 
     Parameters
     ----------
-    model : instance of :class:`sklearn.linear_model.LogisticRegression`
-        The softmax regression model.
+    model : instance of :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+        The lda model.
 
     Attributes
     ----------
-    w : `numpy.ndarray`
-        The weight vector (a matrix if we have more than two classes).
-    b : `numpy.ndarray`
-        The intercept/bias (a vector if we have more than two classes). 
+    class_priors : `numpy.ndarray`
+        Class dependend priors.
+    means : `numpy.ndarray`
+        Class dependend means.
+    sigma_inv : `numpy.ndarray`
+        Inverted covariance matrix.
     dim : `int`
         Dimensionality of the input data.
-    is_multiclass : `boolean`
-        True if `model` is a binary classifier, False otherwise.
 
     Raises
     ------
     TypeError
-        If `model` is not an instance of :class:`sklearn.linear_model.LogisticRegression`
+        If `model` is not an instance of :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
     """
     def __init__(self, model):
-        if not isinstance(model, sklearn.linear_model.LogisticRegression):
-            raise TypeError(f"model has to be an instance of 'sklearn.linear_model.LogisticRegression' not of {type(model)}")
+        if not isinstance(model, LinearDiscriminantAnalysis):
+            raise TypeError(f"model has to be an instance of 'sklearn.discriminant_analysis.LinearDiscriminantAnalysis' but not of {type(model)}")
 
-        self.w = model.coef_
-        self.b = model.intercept_
-        self.dim = model.coef_.shape[1]
+        self.class_priors = model.priors_
+        self.means = model.means_
+        self.sigma_inv = np.linalg.inv(model.covariance_)
 
-        self.is_multiclass = model.coef_.shape[0] > 1
-
-        super(SoftmaxRegression, self).__init__()
-
+        self.dim = self.means.shape[1]
+        
+        super(Lda, self).__init__()
+    
     def predict(self, x):
         """Predict the output of a given input.
 
@@ -62,12 +64,15 @@ class SoftmaxRegression(ModelWithLoss):
         `jax.numpy.array`
             An array containing the class probabilities.
         """
-        return softmax(affine(x, self.w, self.b))
-    
+        log_proba = create_tensor([npx.log(self.class_priors[i]) + log_multivariate_normal(x, self.means[i], self.sigma_inv, self.dim) for i in range(len(self.class_priors))])
+        proba = npx.exp(log_proba)
+
+        return proba / npx.sum(proba)
+
     def get_loss(self, y_target, pred=None):
         """Creates and returns a loss function.
 
-        Builds a negative-log-likehood cost function where the target is `y_target`.
+        Build a negative-log-likehood cost function where the target is `y_target`.
 
         Parameters
         ----------
@@ -91,55 +96,49 @@ class SoftmaxRegression(ModelWithLoss):
             return NegLogLikelihoodCost(pred, y_target)
 
 
-class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadraticProgram):
-    """Class for computing a counterfactual of a softmax regression model.
+class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadraticProgram):
+    """Class for computing a counterfactual of a lda model.
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
     def __init__(self, model):
-        super(SoftmaxCounterfactual, self).__init__(model)
+        super(LdaCounterfactual, self).__init__(model)
     
     def rebuild_model(self, model):
-        """Rebuilds a :class:`sklearn.linear_model.LogisticRegression` model.
+        """Rebuild a :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis` model.
 
-        Converts a :class:`sklearn.linear_model.LogisticRegression` into a :class:`ceml.sklearn.softmaxregression.SoftmaxRegression`.
+        Converts a :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis` into a :class:`ceml.sklearn.lda.Lda`.
 
         Parameters
         ----------
-        model : instance of :class:`sklearn.linear_model.LogisticRegression`
-            The `sklearn` softmax regression model. 
+        model : instance of :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+            The `sklearn` lda model - note that `store_covariance` must be set to True. 
 
         Returns
         -------
-        :class:`ceml.sklearn.softmaxregression.SoftmaxRegression`
-            The wrapped softmax regression model.
+        :class:`ceml.sklearn.lda.Lda`
+            The wrapped qda model.
         """
-        if not isinstance(model, sklearn.linear_model.LogisticRegression):
-            raise TypeError(f"model has to be an instance of 'sklearn.linear_model.LogisticRegression' not of {type(model)}")
-        if model.multi_class != "multinomial":
-            raise ValueError(f"multi_class has to be 'multinomial' not {model.multi_class}")
+        if not isinstance(model, LinearDiscriminantAnalysis):
+            raise TypeError(f"model has to be an instance of 'sklearn.discriminant_analysis.LinearDiscriminantAnalysis' but not of {type(model)}")
 
-        return SoftmaxRegression(model)
+        return Lda(model)
     
     def _build_constraints(self, var_x, y):
         constraints = []
-        
-        if self.mymodel.is_multiclass is True:
-            i = y
-            w_i = self.mymodel.w[i,:]
-            b_i = self.mymodel.b[i]
 
-            for j in range(len(self.mymodel.w)):
-                if i == j:
-                    continue
+        i = y
+        q_i = np.dot(self.mymodel.sigma_inv, self.mymodel.means[i])
+        b_i = np.log(self.mymodel.class_priors[i]) - .5 * np.dot( self.mymodel.means[i], np.dot(self.mymodel.sigma_inv, self.mymodel.means[i]))
 
-                w_j = self.mymodel.w[j,:]
-                b_j = self.mymodel.b[j]
-                
-                constraints.append(w_i.T @ var_x + b_i >= w_j.T @ var_x + b_j + self.epsilon)
-        else:
-            y_ = -1 if y == 0 else 1
-            constraints.append(y_ * (var_x.T @ self.mymodel.w.flatten() + self.mymodel.b.flatten()) >= self.epsilon)
+        for j in range(len(self.mymodel.means)):
+            if i == j:
+                continue
+            
+            q_j = np.dot(self.mymodel.sigma_inv, self.mymodel.means[j])
+            b_j = np.log(self.mymodel.class_priors[j]) - .5 * np.dot(self.mymodel.means[j], np.dot(self.mymodel.sigma_inv, self.mymodel.means[j]))
+
+            constraints.append(q_i.T @ var_x + b_i >= q_j.T @ var_x + b_j + self.epsilon)
 
         return constraints
 
@@ -157,15 +156,13 @@ class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQu
         return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_target, delta
 
 
-def softmaxregression_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
     ----------
-    model : a :class:`sklearn.linear_model.LogisticRegression` instance.
-        The softmax regression model that is used for computing the counterfactual.
-
-        **Note:** `model.multi_class` must be set to `multinomial`.
+    model : a :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis` instance.
+        The lda model that is used for computing the counterfactual.
     x : `numpy.ndarray`
         The input `x` whose prediction has to be explained.
     y_target : `int` or `float` or a callable that returns True if a given prediction is accepted.
@@ -178,7 +175,6 @@ def softmaxregression_generate_counterfactual(model, x, y_target, features_white
         The default is None.
     regularization : `str` or :class:`ceml.costfunctions.costfunctions.CostFunction`, optional
         Regularizer of the counterfactual. Penalty for deviating from the original input `x`.
-        
         Supported values:
         
             - l1: Penalizes the absolute deviation.
@@ -203,7 +199,7 @@ def softmaxregression_generate_counterfactual(model, x, y_target, features_white
 
         The default is "nelder-mead".
 
-        Softmax regression supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a convex quadratic program for computing the counterfactual. Note that in this case the hyperparameter `C` is ignored.
+        Linear discriminant analysis supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a convex quadratic program for computing the counterfactual. Note that in this case the hyperparameter `C` is ignored.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.
@@ -224,6 +220,6 @@ def softmaxregression_generate_counterfactual(model, x, y_target, features_white
     Exception
         If no counterfactual was found.
     """
-    cf = SoftmaxCounterfactual(model)
+    cf = LdaCounterfactual(model)
 
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)

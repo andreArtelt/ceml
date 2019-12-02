@@ -10,6 +10,8 @@ from .randomforest import randomforest_generate_counterfactual
 from .isolationforest import isolationforest_generate_counterfactual
 from .knn import knn_generate_counterfactual
 from .lvq import lvq_generate_counterfactual
+from .lda import lda_generate_counterfactual
+from .qda import qda_generate_counterfactual
 from .pipeline import pipeline_generate_counterfactual
 
 
@@ -109,6 +111,10 @@ def generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l
         return linearregression_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
     elif isinstance(model, sklearn.naive_bayes.GaussianNB):
         return gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
+    elif isinstance(model, sklearn.discriminant_analysis.LinearDiscriminantAnalysis):
+        return lda_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
+    elif isinstance(model, sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis):
+        return qda_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
     elif isinstance(model, sklearn.tree.DecisionTreeClassifier) or isinstance(model, sklearn.tree.DecisionTreeRegressor):
         return decisiontree_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, return_as_dict=return_as_dict, done=done)
     elif isinstance(model, sklearn.ensemble.RandomForestClassifier) or isinstance(model, sklearn.ensemble.RandomForestRegressor):

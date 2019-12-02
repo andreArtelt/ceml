@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import sklearn.linear_model
+import numpy as np
 
 from ..backend.jax.layer import affine, create_tensor
 from ..backend.jax.costfunctions import RegularizedCost, SquaredError
 from ..model import ModelWithLoss
 from .counterfactual import SklearnCounterfactual
+from ..optim import MathematicalProgram, ConvexQuadraticProgram
 
 
 class LinearRegression(ModelWithLoss):
@@ -19,17 +21,20 @@ class LinearRegression(ModelWithLoss):
 
     Attributes
     ----------
-    w : `jax.numpy.array`
+    w : `numpy.ndarray`
         The weight vector (a matrix if we have a multi-dimensional output).
-    b : `jax.numpy.array`
-        The intercept/bias (a vector if we have a multi-dimensional output). 
+    b : `numpy.ndarray`
+        The intercept/bias (a vector if we have a multi-dimensional output).
+    dim : `int`
+        Dimensionality of the input data.
     """
     def __init__(self, model):
         if not isinstance(model, sklearn.linear_model.base.LinearModel):
             raise TypeError(f"model has to be an instance of a linear regression model like 'sklearn.linear_model.LinearRegression', 'sklearn.linear_model.Ridge', 'sklearn.linear_model.Lasso', 'sklearn.linear_model.HuberRegressor' or 'sklearn.linear_model.ElasticNet' but not of {type(model)}")
 
-        self.w = create_tensor(model.coef_)
-        self.b = create_tensor(model.intercept_)
+        self.w = model.coef_
+        self.b = model.intercept_
+        self.dim = model.coef_.shape[0]
 
         super(LinearRegression, self).__init__()
 
@@ -77,7 +82,7 @@ class LinearRegression(ModelWithLoss):
             return SquaredError(pred, y_target)
 
 
-class LinearRegressionCounterfactual(SklearnCounterfactual):
+class LinearRegressionCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadraticProgram):
     """Class for computing a counterfactual of a linear regression model.
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
@@ -104,6 +109,25 @@ class LinearRegressionCounterfactual(SklearnCounterfactual):
             raise TypeError(f"model has to be an instance of a linear regression model like 'sklearn.linear_model.LinearRegression', 'sklearn.linear_model.Ridge', 'sklearn.linear_model.Lasso', 'sklearn.linear_model.HuberRegressor' or 'sklearn.linear_model.ElasticNet' but not of {type(model)}")
     
         return LinearRegression(model)
+    
+    def _build_constraints(self, var_x, y):
+        constraints = []
+
+        constraints.append(self.mymodel.w @ var_x + self.mymodel.b - y <= self.epsilon)
+        constraints.append(-self.mymodel.w @ var_x - self.mymodel.b + y <= self.epsilon)
+        
+        return constraints
+
+    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
+        mad = None
+        if regularization == "l1":
+            mad = np.ones(self.mymodel.dim)
+
+        xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, mad=mad)
+        delta = x_orig - xcf
+        y_cf = self.model.predict([xcf])
+
+        return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_cf, delta
 
 
 def linearregression_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
@@ -144,11 +168,13 @@ def linearregression_generate_counterfactual(model, x, y_target, features_whitel
         The default is 1.0
     optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
         Name/Identifier of the optimizer that is used for computing the counterfactual.
-        See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+        See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
         The default is "nelder-mead".
+
+        Linear regression supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a convex quadratic program for computing the counterfactual. Note that in this case the hyperparameter `C` is ignored.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.

@@ -50,6 +50,20 @@ ceml.sklearn.naivebayes
    :members:
    :show-inheritance:
 
+ceml.sklearn.lda
+----------------
+
+.. automodule:: ceml.sklearn.lda
+   :members:
+   :show-inheritance:
+
+ceml.sklearn.qda
+------------------------------
+
+.. automodule:: ceml.sklearn.qda
+   :members:
+   :show-inheritance:
+
 ceml.sklearn.pipeline
 ---------------------
 

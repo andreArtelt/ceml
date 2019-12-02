@@ -190,7 +190,7 @@ class IsolationForestCounterfactual(SklearnCounterfactual):
         x : `numpy.ndarray`
             The input `x` whose prediction has to be explained.
         y_target : `int` or `float`
-            The desired prediction of the counterfactual.
+            The requested prediction of the counterfactual.
         feature_whitelist : `list(int)`, optional
             List of feature indices (dimensions of the input space) that can be used when computing the counterfactual.
             

@@ -2,51 +2,56 @@
 import jax.numpy as npx
 import numpy as np
 import cvxpy as cp
-import sklearn.naive_bayes
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
-from ..backend.jax.layer import log_normal_distribution, create_tensor
+from ..backend.jax.layer import log_multivariate_normal, create_tensor
 from ..backend.jax.costfunctions import NegLogLikelihoodCost
 from ..model import ModelWithLoss
 from .counterfactual import SklearnCounterfactual
 from ..optim import MathematicalProgram, SDP, DCQP
 
 
-class GaussianNB(ModelWithLoss):
-    """Class for rebuilding/wrapping the :class:`sklearn.naive_bayes.GaussianNB` class
+class Qda(ModelWithLoss):
+    """Class for rebuilding/wrapping the :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis` class.
 
-    The :class:`GaussianNB` class rebuilds a gaussian naive bayes model from a given set of parameters (priors, means and variances).
+    The :class:`Qda` class rebuilds a lda model from a given parameters.
 
     Parameters
     ----------
-    model : instance of :class:`sklearn.naive_bayes.GaussianNB`
-        The gaussian naive bayes model.
+    model : instance of :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+        The qda model.
 
     Attributes
     ----------
     class_priors : `numpy.ndarray`
         Class dependend priors.
-    means : `numpy.array`
-        Class and feature dependend means.
-    variances : `numpy.ndarray`
-        Class and feature dependend variances.
-    dim  : `int`
+    means : `numpy.ndarray`
+        Class dependend means.
+    sigma_inv : `numpy.ndarray`
+        Class dependend inverted covariance matrices.
+    dim : `int`
         Dimensionality of the input data.
     is_binary : `boolean`
         True if `model` is a binary classifier, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If `model` is not an instance of :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
     """
     def __init__(self, model):
-        if not isinstance(model, sklearn.naive_bayes.GaussianNB):
-            raise TypeError(f"model has to be an instance of 'sklearn.naive_bayes.GaussianNB' but not of {type(model)}")
+        if not isinstance(model, QuadraticDiscriminantAnalysis):
+            raise TypeError(f"model has to be an instance of 'sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis' but not of {type(model)}")
 
-        self.class_priors = model.class_prior_
-        self.means = model.theta_
-        self.variances = model.sigma_
+        self.class_priors = model.priors_
+        self.means = model.means_
+        self.sigma_inv = [np.linalg.inv(cov) for cov in model.covariance_]
 
         self.dim = self.means.shape[1]
         self.is_binary = self.means.shape[0] == 2
         
-        super(GaussianNB, self).__init__()
-
+        super(Qda, self).__init__()
+    
     def predict(self, x):
         """Predict the output of a given input.
 
@@ -62,13 +67,11 @@ class GaussianNB(ModelWithLoss):
         `jax.numpy.array`
             An array containing the class probabilities.
         """
-        feature_wise_normal = lambda z, mu, v: npx.sum([log_normal_distribution(z[i], mu[i], v[i]) for i in range(z.shape[0])])
-
-        log_proba = create_tensor([npx.log(self.class_priors[i]) + feature_wise_normal(x, self.means[i], self.variances[i]) for i in range(len(self.class_priors))])
+        log_proba = create_tensor([npx.log(self.class_priors[i]) + log_multivariate_normal(x, self.means[i], self.sigma_inv[i], self.dim) for i in range(len(self.class_priors))])
         proba = npx.exp(log_proba)
 
         return proba / npx.sum(proba)
-    
+
     def get_loss(self, y_target, pred=None):
         """Creates and returns a loss function.
 
@@ -96,41 +99,41 @@ class GaussianNB(ModelWithLoss):
             return NegLogLikelihoodCost(pred, y_target)
 
 
-class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
-    """Class for computing a counterfactual of a gaussian naive bayes model.
+class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
+    """Class for computing a counterfactual of a qda model.
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
     def __init__(self, model):
-        super(GaussianNbCounterfactual, self).__init__(model)
+        super(QdaCounterfactual, self).__init__(model)
     
     def rebuild_model(self, model):
-        """Rebuild a :class:`sklearn.naive_bayes.GaussianNB` model.
+        """Rebuild a :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis` model.
 
-        Converts a :class:`sklearn.naive_bayes.GaussianNB` into a :class:`ceml.sklearn.naivebayes.GaussianNB`.
+        Converts a :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis` into a :class:`ceml.sklearn.qda.Qda`.
 
         Parameters
         ----------
-        model : instance of :class:`sklearn.naive_bayes.GaussianNB`
-            The `sklearn` gaussian naive bayes model. 
+        model : instance of :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+            The `sklearn` qda model - note that `store_covariance` must be set to True. 
 
         Returns
         -------
-        :class:`ceml.sklearn.naivebayes.GaussianNB`
-            The wrapped gaussian naive bayes model.
+        :class:`ceml.sklearn.qda.Qda`
+            The wrapped qda model.
         """
-        if not isinstance(model, sklearn.naive_bayes.GaussianNB):
-            raise TypeError(f"model has to be an instance of 'sklearn.naive_bayes.GaussianNB' but not of {type(model)}")
+        if not isinstance(model, QuadraticDiscriminantAnalysis):
+            raise TypeError(f"model has to be an instance of 'sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis' but not of {type(model)}")
 
-        return GaussianNB(model)
-
+        return Qda(model)
+    
     def _build_constraints(self, var_X, var_x, y):
         i = y
         j = 0 if y == 1 else 1
 
-        A = np.diag(-1. / (2. * self.mymodel.variances[j, :])) + np.diag(1. / (2. * self.mymodel.variances[i, :]))
-        b = (self.mymodel.means[j, :] / self.mymodel.variances[j, :]) - (self.mymodel.means[i, :] / self.mymodel.variances[i, :])
-        c = np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[j,k])) - ((self.mymodel.means[j,k]**2) / (2.*self.mymodel.variances[j,k])) for k in range(self.mymodel.dim)]) - np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[i,k])) - ((self.mymodel.means[i,k]**2) / (2.*self.mymodel.variances[i,k])) for k in range(self.mymodel.dim)])
+        A = .5 * ( self.mymodel.sigma_inv[i] - self.mymodel.sigma_inv[j])
+        b = np.dot(self.mymodel.sigma_inv[j], self.mymodel.means[j]) - np.dot(self.mymodel.sigma_inv[i], self.mymodel.means[i])
+        c = np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + 0.5 * np.log(np.linalg.det(self.mymodel.sigma_inv[j]) / np.linalg.det(self.mymodel.sigma_inv[i])) + 0.5 * (self.mymodel.means[i].T.dot(self.mymodel.sigma_inv[i]).dot(self.mymodel.means[i]) - self.mymodel.means[j].T.dot(self.mymodel.sigma_inv[j]).dot(self.mymodel.means[j]))
 
         return [cp.trace(A @ var_X) + var_x.T @ b + c + self.epsilon <= 0]
 
@@ -147,19 +150,19 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
         
         i = y_target
         for j in filter(lambda z: z != y_target, range(len(self.mymodel.means))):
-            A0_i.append(np.diag(1. / (2. * self.mymodel.variances[i, :])))
-            A1_i.append(np.diag(1. / (2. * self.mymodel.variances[j, :])))
-            b_i.append((self.mymodel.means[j, :] / self.mymodel.variances[j, :]) - (self.mymodel.means[i, :] / self.mymodel.variances[i, :]))
-            r_i.append(np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[j,k])) - ((self.mymodel.means[j,k]**2) / (2.*self.mymodel.variances[j,k])) for k in range(self.mymodel.dim)]) - np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[i,k])) - ((self.mymodel.means[i,k]**2) / (2.*self.mymodel.variances[i,k])) for k in range(self.mymodel.dim)]))
+            A0_i.append(.5 * self.mymodel.sigma_inv[i])
+            A1_i.append(.5 * self.mymodel.sigma_inv[j])
+            b_i.append(np.dot(self.mymodel.sigma_inv[j], self.mymodel.means[j]) - np.dot(self.mymodel.sigma_inv[i], self.mymodel.means[i]))
+            r_i.append(np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + .5 * np.log(np.linalg.det(self.mymodel.sigma_inv[j]) / np.linalg.det(self.mymodel.sigma_inv[i])) + .5 * (self.mymodel.means[i].T.dot(self.mymodel.sigma_inv[i]).dot(self.mymodel.means[i]) - self.mymodel.means[j].T.dot(self.mymodel.sigma_inv[j]).dot(self.mymodel.means[j])))
 
         self.build_program(self.model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=features_whitelist, mad=None if regularization != "l1" else np.ones(self.mymodel.dim))
         
-        return DCQP.solve(self, x0=self.mymodel.means[i, :], tao=1.2, tao_max=100, mu=1.5)
+        return DCQP.solve(self, x0=self.mymodel.means[i], tao=1.2, tao_max=100, mu=1.5)
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
         xcf = None
         if self.mymodel.is_binary:
-            xcf = self.build_solve_opt(x_orig, y_target)
+            xcf = self.build_solve_opt(x_orig, y_target, features_whitelist)
         else:
             xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist)
         delta = x_orig - xcf
@@ -170,13 +173,13 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
         return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_target, delta
 
 
-def gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+def qda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
     ----------
-    model : a :class:`sklearn.naive_bayes.GaussianNB` instance.
-        The gaussian naive bayes model that is used for computing the counterfactual.
+    model : a :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis` instance.
+        The qda model that is used for computing the counterfactual.
     x : `numpy.ndarray`
         The input `x` whose prediction has to be explained.
     y_target : `int` or `float` or a callable that returns True if a given prediction is accepted.
@@ -213,7 +216,7 @@ def gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=No
 
         The default is "nelder-mead".
 
-        Gaussian naive Bayes supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a semi-definite program (binary classifier) or a DCQP (otherwise) for computing the counterfactual.
+        Quadratic discriminant analysis supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a semi-definite program (binary classifier) or a DCQP (otherwise) for computing the counterfactual.
         Note that in this case the hyperparameter `C` is ignored.
         Because the DCQP is a non-convex problem, we are not guaranteed to find the best solution (it might even happen that we do not find a solution at all) - we use the penalty convex-concave procedure for approximately solving the DCQP.
     return_as_dict : `boolean`, optional
@@ -236,6 +239,6 @@ def gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=No
     Exception
         If no counterfactual was found.
     """
-    cf = GaussianNbCounterfactual(model)
+    cf = QdaCounterfactual(model)
 
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)

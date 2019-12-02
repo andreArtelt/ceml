@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 import logging
 
-from ..optim import InputWrapper, prepare_optim
+from ..optim import InputWrapper, prepare_optim, MathematicalProgram
 from ..model import Counterfactual
 from ..backend.jax.costfunctions import RegularizedCost
 from .utils import build_regularization_loss, wrap_input
@@ -96,9 +96,9 @@ class SklearnCounterfactual(Counterfactual, ABC):
         Parameters
         ----------
         x : `numpy.ndarray`
-            The input `x` whose prediction has to be explained.
+            The data point `x` whose prediction has to be explained.
         y_target : `int` or `float`
-            The desired prediction of the counterfactual.
+            The requested prediction of the counterfactual.
         feature_whitelist : `list(int)`, optional
             List of feature indices (dimensions of the input space) that can be used when computing the counterfactual.
             
@@ -125,9 +125,11 @@ class SklearnCounterfactual(Counterfactual, ABC):
             The default is 1.0
         optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
             Name/Identifier of the optimizer that is used for computing the counterfactual.
-            See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+            See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
             As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
+
+            Some models (see paper) support the use of mathematical programs for computing counterfactuals. In this case, you can use the option "mp" - please read the documentation of the corresponding model for further information.
 
             The default is "nelder-mead".
         return_as_dict : `boolean`, optional
@@ -158,31 +160,34 @@ class SklearnCounterfactual(Counterfactual, ABC):
         Exception
             If no counterfactual was found.
         """
-        # Hide the input in a wrapper if we can use a subset of features only
-        input_wrapper, x_orig, pred, grad_mask = self.wrap_input(features_whitelist, x, optimizer)
-        
-        # Check if the prediction of the given input is already consistent with y_target
-        done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
-        self.warn_if_already_done(x, done)
+        if optimizer == "mp" and isinstance(self, MathematicalProgram):
+            return self.solve(x, y_target, regularization, features_whitelist, return_as_dict)
+        else:
+            # Hide the input in a wrapper if we can use a subset of features only
+            input_wrapper, x_orig, pred, grad_mask = self.wrap_input(features_whitelist, x, optimizer)
+            
+            # Check if the prediction of the given input is already consistent with y_target
+            done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
+            self.warn_if_already_done(x, done)
 
-        # Repeat for all C
-        if not type(C) == list:
-            C = [C]
+            # Repeat for all C
+            if not type(C) == list:
+                C = [C]
 
-        for c in C:
-            # Build loss
-            loss, loss_grad = self.build_loss(regularization, x_orig, y_target, pred, grad_mask, c, input_wrapper)
+            for c in C:
+                # Build loss
+                loss, loss_grad = self.build_loss(regularization, x_orig, y_target, pred, grad_mask, c, input_wrapper)
 
-            # Compute counterfactual
-            x_cf, y_cf, delta = self.compute_counterfactual_ex(x, loss, x_orig, loss_grad, optimizer, input_wrapper, False)
+                # Compute counterfactual
+                x_cf, y_cf, delta = self.compute_counterfactual_ex(x, loss, x_orig, loss_grad, optimizer, input_wrapper, False)
 
-            if done(y_cf) == True:
-                if return_as_dict is True:
-                    return self.__build_result_dict(x_cf, y_cf, delta)
-                else:
-                    return x_cf, y_cf, delta
-        
-        raise Exception("No counterfactual found - Consider changing parameters 'C', 'regularization', 'features_whitelist', 'optimizer' and try again")
+                if done(y_cf) == True:
+                    if return_as_dict is True:
+                        return self.__build_result_dict(x_cf, y_cf, delta)
+                    else:
+                        return x_cf, y_cf, delta
+            
+            raise Exception("No counterfactual found - Consider changing parameters 'C', 'regularization', 'features_whitelist', 'optimizer' and try again")
     
     def __call__(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
         return self.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)

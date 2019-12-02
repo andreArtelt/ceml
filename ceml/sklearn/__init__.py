@@ -6,6 +6,8 @@ from .randomforest import *
 from .isolationforest import *
 from .knn import *
 from .lvq import *
+from .lda import *
+from .qda import *
 from .pipeline import *
 from .naivebayes import *
 from .counterfactual import *

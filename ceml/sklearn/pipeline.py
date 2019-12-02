@@ -7,6 +7,8 @@ from .naivebayes import GaussianNB
 from .linearregression import LinearRegression
 from .knn import KNN
 from .lvq import LVQ
+from .lda import Lda
+from .qda import Qda
 from ..model import ModelWithLoss
 from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures, Normalizer, MinMaxScaler
 from ..backend.jax.costfunctions import CostFunctionDifferentiable, RegularizedCost
@@ -113,6 +115,10 @@ class PipelineCounterfactual(SklearnCounterfactual):
             return LinearRegression(model)
         elif isinstance(model, sklearn.naive_bayes.GaussianNB):
             return GaussianNB(model)
+        elif isinstance(model, sklearn.discriminant_analysis.LinearDiscriminantAnalysis):
+            return Lda(model)
+        elif isinstance(model, sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis):
+            return Qda(model)
         elif isinstance(model, sklearn.tree.DecisionTreeClassifier) or isinstance(model, sklearn.tree.DecisionTreeRegressor):
             raise NotImplementedError()
         elif isinstance(model, sklearn.ensemble.RandomForestClassifier) or isinstance(model, sklearn.ensemble.RandomForestRegressor):
@@ -241,11 +247,13 @@ def pipeline_generate_counterfactual(model, x, y_target, features_whitelist=None
         The default is 1.0
     optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
         Name/Identifier of the optimizer that is used for computing the counterfactual.
-        See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
+        See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
         The default is "nelder-mead".
+
+        Some models (see paper) support the use of mathematical programs for computing counterfactuals. In this case, you can use the option "mp" - please read the documentation of the corresponding model for further information.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.

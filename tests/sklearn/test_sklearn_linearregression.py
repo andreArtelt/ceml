@@ -33,6 +33,14 @@ def test_linearregression():
 
     features_whitelist = None
 
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
+    assert y_target_done(y_cf)
+    assert y_target_done(model.predict(np.array([x_cf])))
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
+    assert y_target_done(y_cf)
+    assert y_target_done(model.predict(np.array([x_cf])))
+
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l1", C=[1.e10, 1.0], optimizer="bfgs", return_as_dict=False)
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(np.array([x_cf])))
@@ -55,6 +63,16 @@ def test_linearregression():
     #assert y_target_done(y_cf)
     #assert y_target_done(model.predict(np.array([x_cf])))
     #assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
+    assert y_target_done(y_cf)
+    assert y_target_done(model.predict(np.array([x_cf])))
+    assert all([True if i in features_whitelist else delta[i] <= 1e-5 for i in range(x_orig.shape[0])])
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
+    assert y_target_done(y_cf)
+    assert y_target_done(model.predict(np.array([x_cf])))
+    assert all([True if i in features_whitelist else delta[i] <= 1e-2 for i in range(x_orig.shape[0])])
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=False)
     assert y_target_done(y_cf)
