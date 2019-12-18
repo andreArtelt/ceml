@@ -169,7 +169,7 @@ class CQPHelper(ConvexQuadraticProgram):
         results = []
         for k in range(len(self.other_prototypes)):
             p_j = self.other_prototypes[k]
-            qj = .5 * np.dot(Omega, p_j - p_i)
+            qj = np.dot(Omega, p_j - p_i)
             bj = -.5 * (np.dot(p_i, np.dot(Omega, p_i)) - np.dot(p_j, np.dot(Omega, p_j)))
             results.append(qj.T @ var_x + bj + self.epsilon <= 0)
 
@@ -254,7 +254,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         p_i = self.mymodel.prototypes[target_prototype_id]
         o_i = self.mymodel.dist_mats[target_prototype_id] if not self.mymodel.classwise else self.mymodel.omegas[y_target]
         ri = .5 * np.dot(p_i, np.dot(o_i, p_i))
-        qi = .5 * np.dot(o_i, p_i)
+        qi = np.dot(o_i, p_i)
 
         Q0 = None
         Q1 = None
@@ -274,7 +274,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
             p_j = self.mymodel.prototypes[j]
             o_j = self.mymodel.omegas[self.mymodel.labels[j]] if self.mymodel.classwise else self.mymodel.dist_mats[j]
 
-            q =  .5 * np.dot(o_j, p_j) - qi
+            q =  np.dot(o_j, p_j) - qi
             r = ri - .5 * np.dot(p_j, np.dot(o_j, p_j))
             
             A0_i.append(.5 * o_i)
