@@ -30,7 +30,7 @@ def test_linearregression():
         def fit(self, x_train, y_train, num_epochs=800):
             self.model.compile(optimizer='adam', loss='mse')
 
-            self.model.fit(X_train, y_train, epochs=num_epochs, verbose=False)
+            self.model.fit(x_train, y_train, epochs=num_epochs, verbose=False)
 
         def predict(self, x):
             return self.model(x)
