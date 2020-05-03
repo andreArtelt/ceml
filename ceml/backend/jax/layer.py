@@ -13,6 +13,10 @@ def affine(x, w, b):
 def softmax(x):
     return npx.exp(x) / npx.sum(npx.exp(x), axis=0)
 
+def softmax_binary(x):
+    a = 1. / (1 + npx.exp(-1. * x))
+    return create_tensor([a, 1. - a])
+
 def normal_distribution(x, mean, variance):
     return npx.exp(-.5 * npx.square(x - mean) / variance) / npx.sqrt(2. * npx.pi * variance)
 

@@ -9,7 +9,7 @@ def loglikelihood(y_pred, y_target):
     return npx.log(y_pred)[y_target]
 
 def negloglikelihood(y_pred, y_target):
-    return -1. * loglikelihood(y_pred, y_target)
+    return -1. * npx.sum(loglikelihood(y_pred, y_target))
 
 def custom_dist(x, x_orig, omega):
     d = npx.array(x - x_orig)

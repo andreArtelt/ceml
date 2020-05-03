@@ -2,7 +2,7 @@
 import sklearn.linear_model
 import numpy as np
 
-from ..backend.jax.layer import create_tensor, affine, softmax
+from ..backend.jax.layer import create_tensor, affine, softmax, softmax_binary
 from ..backend.jax.costfunctions import NegLogLikelihoodCost
 from ..model import ModelWithLoss
 from .counterfactual import SklearnCounterfactual
@@ -62,7 +62,10 @@ class SoftmaxRegression(ModelWithLoss):
         `jax.numpy.array`
             An array containing the class probabilities.
         """
-        return softmax(affine(x, self.w, self.b))
+        if self.is_multiclass is True:
+            return softmax(affine(x, self.w, self.b))
+        else:
+            return softmax_binary(affine(x, self.w, self.b))
     
     def get_loss(self, y_target, pred=None):
         """Creates and returns a loss function.
