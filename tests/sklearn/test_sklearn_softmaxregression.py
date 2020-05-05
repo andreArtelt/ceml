@@ -46,6 +46,23 @@ def test_softmaxregression():
     # Load data
     X, y = load_iris(True)
 
+    # Binary classification problem
+    idx = y > 1 # Convert data into a binary problem
+    X_, y_ = X[idx,:], y[idx]
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)    # Split data into training and test set
+
+    model = LogisticRegression(solver='lbfgs', multi_class='multinomial')   # Create and fit model
+    model.fit(X_train, y_train)
+
+    x_orig = X_test[1:4][0,:]   # Select data point for explaining its prediction
+    assert model.predict([x_orig]) == 2
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, return_as_dict=False) # Compute counterfactual explanation
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    # Multiclass classification problem
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
     # Create and fit model
@@ -63,6 +80,10 @@ def test_softmaxregression():
 
     # Compute counterfactual
     features_whitelist = None
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
     assert y_cf == 0
