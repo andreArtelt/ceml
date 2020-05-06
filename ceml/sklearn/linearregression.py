@@ -29,7 +29,7 @@ class LinearRegression(ModelWithLoss):
         Dimensionality of the input data.
     """
     def __init__(self, model):
-        if not isinstance(model, sklearn.linear_model.base.LinearModel):
+        if not isinstance(model, sklearn.linear_model._base.LinearModel):
             raise TypeError(f"model has to be an instance of a linear regression model like 'sklearn.linear_model.LinearRegression', 'sklearn.linear_model.Ridge', 'sklearn.linear_model.Lasso', 'sklearn.linear_model.HuberRegressor' or 'sklearn.linear_model.ElasticNet' but not of {type(model)}")
 
         self.w = model.coef_
@@ -105,7 +105,7 @@ class LinearRegressionCounterfactual(SklearnCounterfactual, MathematicalProgram,
         :class:`ceml.sklearn.linearregression.LinearRegression`
             The wrapped linear regression model.
         """
-        if not isinstance(model, sklearn.linear_model.base.LinearModel):
+        if not isinstance(model, sklearn.linear_model._base.LinearModel):
             raise TypeError(f"model has to be an instance of a linear regression model like 'sklearn.linear_model.LinearRegression', 'sklearn.linear_model.Ridge', 'sklearn.linear_model.Lasso', 'sklearn.linear_model.HuberRegressor' or 'sklearn.linear_model.ElasticNet' but not of {type(model)}")
     
         return LinearRegression(model)

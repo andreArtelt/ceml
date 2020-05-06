@@ -107,7 +107,7 @@ def generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l
         return pipeline_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
     elif isinstance(model, sklearn.linear_model.LogisticRegression):
         return softmaxregression_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
-    elif isinstance(model, sklearn.linear_model.base.LinearModel):
+    elif isinstance(model, sklearn.linear_model._base.LinearModel):
         return linearregression_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)
     elif isinstance(model, sklearn.naive_bayes.GaussianNB):
         return gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=features_whitelist, regularization=regularization, C=C, optimizer=optimizer, return_as_dict=return_as_dict, done=done)

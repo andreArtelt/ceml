@@ -95,13 +95,13 @@ class PipelineCounterfactual(SklearnCounterfactual):
         super(PipelineCounterfactual, self).__init__(model)
 
     def wrap_model(self, model):
-        if isinstance(model, sklearn.preprocessing.data.StandardScaler):
+        if isinstance(model, sklearn.preprocessing._data.StandardScaler):
             return StandardScaler(model.mean_ if model.with_mean else 0, model.scale_ if model.with_std else 1)
-        elif isinstance(model, sklearn.preprocessing.data.RobustScaler):
+        elif isinstance(model, sklearn.preprocessing._data.RobustScaler):
             return StandardScaler(model.center_  if model.with_centering else 0, model.scale_ if model.with_scaling else 1)
-        elif isinstance(model, sklearn.preprocessing.data.MaxAbsScaler):
+        elif isinstance(model, sklearn.preprocessing._data.MaxAbsScaler):
             return StandardScaler(0, model.scale_)
-        elif isinstance(model, sklearn.preprocessing.data.MinMaxScaler):
+        elif isinstance(model, sklearn.preprocessing._data.MinMaxScaler):
             return MinMaxScaler(model.min_, model.scale_)
         elif isinstance(model, sklearn.preprocessing.Normalizer):
             return Normalizer()
@@ -111,7 +111,7 @@ class PipelineCounterfactual(SklearnCounterfactual):
             return PolynomialFeatures(model.powers_)
         elif isinstance(model, sklearn.linear_model.LogisticRegression):
             return SoftmaxRegression(model)
-        elif isinstance(model, sklearn.linear_model.base.LinearModel):
+        elif isinstance(model, sklearn.linear_model._base.LinearModel):
             return LinearRegression(model)
         elif isinstance(model, sklearn.naive_bayes.GaussianNB):
             return GaussianNB(model)
