@@ -90,7 +90,7 @@ class SklearnCounterfactual(Counterfactual, ABC):
         else:
             return x_cf, y_cf, delta
 
-    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
         """Computes a counterfactual of a given input `x`.
 
         Parameters
@@ -127,11 +127,13 @@ class SklearnCounterfactual(Counterfactual, ABC):
             Name/Identifier of the optimizer that is used for computing the counterfactual.
             See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
+            Use "auto" if you do not know what optimizer to use - a sutiable optimizer is chosen automatically.
+
             As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
             Some models (see paper) support the use of mathematical programs for computing counterfactuals. In this case, you can use the option "mp" - please read the documentation of the corresponding model for further information.
 
-            The default is "nelder-mead".
+            The default is "auto".
         return_as_dict : `boolean`, optional
             If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
             If False, the results are returned as a triple.
@@ -160,6 +162,12 @@ class SklearnCounterfactual(Counterfactual, ABC):
         Exception
             If no counterfactual was found.
         """
+        if optimizer == "auto": # Chose a suitable optimizer
+            if isinstance(self, MathematicalProgram):   
+                optimizer = "mp"
+            else:
+                optimizer = "nelder-mead"
+
         if optimizer == "mp" and isinstance(self, MathematicalProgram):
             return self.solve(x, y_target, regularization, features_whitelist, return_as_dict)
         else:
