@@ -21,14 +21,14 @@ Installation
 
 **Note: Python 3.6 or higher is required!**
 
-PyPi
+PyPI
 ++++
 
 .. code-block:: bash
 
     pip install ceml
 
-**Note**: The package hosted on PyPi uses the cpu only. If you want to use the gpu, you have to install ceml manually - see next section.
+**Note**: The package hosted on PyPI uses the cpu only. If you want to use the gpu, you have to install ceml manually - see next section.
 
 **ATTENTION**: It can happen that the installation of sklearn-lvq fails with the message "numpy is required during installation". In this case you either have to install numpy and scipy first (before running *pip install ceml*), or install ceml manually as described in the next section. 
 
