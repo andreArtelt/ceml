@@ -95,12 +95,12 @@ def test_softmaxregression():
         optimizer.step()
 
     # Evaluation
-    y_pred = model.predict(x_test).numpy()
+    y_pred = model.predict(x_test).detach().numpy()
     assert accuracy_score(y_test, y_pred) >= 0.8
 
     # Select data point for explaining its prediction
     x_orig = X_test[1,:]
-    assert model.predict(torch.from_numpy(np.array([x_orig]))).numpy() == 1
+    assert model.predict(torch.from_numpy(np.array([x_orig]))).detach().numpy() == 1
 
     # Create weighted manhattan distance cost function
     md = np.median(X_train, axis=0)
@@ -114,38 +114,38 @@ def test_softmaxregression():
     optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=MyOptimizer(), optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
 
     optimizer = "bfgs"
     optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization=regularization_mad, C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
 
     optimizer = "nelder-mead"
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l1", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
 
     optimizer = torch.optim.SGD
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
 
     optimizer = "bfgs"
     optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization=None, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
 
     optimizer = torch.optim.SGD
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization=None, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
 
 
     features_whitelist = [0, 2]
@@ -154,29 +154,29 @@ def test_softmaxregression():
     optimizer_args = {"max_iter": 1000, "args": {"lr": 0.9, "momentum": 0.9}}
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l1", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
     optimizer = "nelder-mead"
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
     optimizer = torch.optim.SGD
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
     optimizer = "bfgs"
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization=None, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
     optimizer = torch.optim.SGD
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization=None, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
-    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).numpy() == 0
+    assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])

@@ -64,7 +64,7 @@ if __name__ == "__main__":
         optimizer.step()
 
     # Evaluation
-    y_pred = model.predict(x_test).numpy()
+    y_pred = model.predict(x_test).detach().numpy()
     print("Accuracy: {0}".format(accuracy_score(y_test, y_pred)))
 
     # Select a data point whose prediction has to be explained
