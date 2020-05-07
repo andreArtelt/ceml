@@ -156,7 +156,7 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
         return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_target, delta
 
 
-def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="mp", return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -195,11 +195,11 @@ def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, reg
         Name/Identifier of the optimizer that is used for computing the counterfactual.
         See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
+        Linear discriminant analysis supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a convex quadratic program for computing the counterfactual. Note that in this case the hyperparameter `C` is ignored.
+
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
-        The default is "nelder-mead".
-
-        Linear discriminant analysis supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a convex quadratic program for computing the counterfactual. Note that in this case the hyperparameter `C` is ignored.
+        The default is "mp".
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.

@@ -127,7 +127,7 @@ class SklearnCounterfactual(Counterfactual, ABC):
             Name/Identifier of the optimizer that is used for computing the counterfactual.
             See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
-            Use "auto" if you do not know what optimizer to use - a sutiable optimizer is chosen automatically.
+            Use "auto" if you do not know what optimizer to use - a suitable optimizer is chosen automatically.
 
             As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 

@@ -337,7 +337,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_target, delta
 
 
-def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l2", regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l2", regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -393,7 +393,9 @@ def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dis
 
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
-        The default is "nelder-mead".
+        Use "auto" if you do not know what optimizer to use - a suitable optimizer is chosen automatically.
+
+        The default is "auto".
 
         Learning vector quantization supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a convex quadratic program (G(M)LVQ) or a DCQP (otherwise) for computing the counterfactual.
         Note that in this case the hyperparameter `C` is ignored.
@@ -419,5 +421,11 @@ def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dis
         If no counterfactual was found.
     """
     cf = LvqCounterfactual(model, dist)
+
+    if optimizer == "auto":     # Choose a suitable optimizer
+        if not(isinstance(model, sklearn_lvq.LgmlvqModel) or isinstance(model, sklearn_lvq.LmrslvqModel)):
+            optimizer = "mp"
+        else:
+            optimizer = "nelder-mead"
 
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict)    

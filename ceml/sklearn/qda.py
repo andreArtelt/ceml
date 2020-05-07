@@ -173,7 +173,7 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
         return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_target, delta
 
 
-def qda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+def qda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -240,5 +240,11 @@ def qda_generate_counterfactual(model, x, y_target, features_whitelist=None, reg
         If no counterfactual was found.
     """
     cf = QdaCounterfactual(model)
+
+    if optimizer == "auto":
+        if cf.mymodel.is_binary:
+            optimizer = "mp"
+        else:
+            optimizer = "nelder-mead"
 
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
