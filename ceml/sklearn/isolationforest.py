@@ -356,4 +356,7 @@ def isolationforest_generate_counterfactual(model, x, y_target, features_whiteli
     """
     cf = IsolationForestCounterfactual(model)
 
+    if optimizer == "auto":
+        optimizer = "nelder-mead"
+
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict)

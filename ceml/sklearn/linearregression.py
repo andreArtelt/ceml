@@ -205,4 +205,7 @@ def linearregression_generate_counterfactual(model, x, y_target, features_whitel
     """
     cf = LinearRegressionCounterfactual(model)
 
+    if optimizer == "auto":
+        optimizer = "mp"
+
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)

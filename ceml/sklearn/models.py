@@ -15,7 +15,7 @@ from .qda import qda_generate_counterfactual
 from .pipeline import pipeline_generate_counterfactual
 
 
-def generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l2", regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+def generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l2", regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -72,9 +72,11 @@ def generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l
         Name/Identifier of the optimizer that is used for computing the counterfactual.
         See :func:`ceml.optimizer.optimizer.desc_to_optim` for details.
 
+        Use "auto" if you do not know what optimizer to use - a suitable optimizer is chosen automatically.
+
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
-        The default is "nelder-mead".
+        The default is "auto".
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.

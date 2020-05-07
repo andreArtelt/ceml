@@ -319,4 +319,7 @@ def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=
     """
     cf = RandomForestCounterfactual(model)
 
+    if optimizer == "auto":
+        optimizer = "nelder-mead"
+
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict)

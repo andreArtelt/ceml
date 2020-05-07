@@ -249,6 +249,8 @@ def pipeline_generate_counterfactual(model, x, y_target, features_whitelist=None
         Name/Identifier of the optimizer that is used for computing the counterfactual.
         See :func:`ceml.optim.optimizer.prepare_optim` for details.
 
+        Use "auto" if you do not know what optimizer to use - a suitable optimizer is chosen automatically.
+
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
         The default is "nelder-mead".
@@ -283,5 +285,8 @@ def pipeline_generate_counterfactual(model, x, y_target, features_whitelist=None
         If no counterfactual was found.
     """
     cf = PipelineCounterfactual(model)
+
+    if optimizer == "auto":
+        optimizer = "nelder-mead"
 
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)

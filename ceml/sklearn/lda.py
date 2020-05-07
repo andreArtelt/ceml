@@ -222,4 +222,7 @@ def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, reg
     """
     cf = LdaCounterfactual(model)
 
+    if optimizer == "auto":
+        optimizer = "mp"
+
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
