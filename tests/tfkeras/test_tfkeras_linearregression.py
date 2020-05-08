@@ -3,8 +3,7 @@ import sys
 sys.path.insert(0,'..')
 
 import tensorflow as tf
-tf.compat.v1.enable_eager_execution()
-tf.random.set_random_seed(42)
+tf.random.set_seed(42)
 
 import numpy as np
 np.random.seed(42)

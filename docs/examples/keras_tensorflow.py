@@ -39,10 +39,7 @@ class Model(ModelWithLoss):
 
 
 if __name__ == "__main__":
-    # IMPORTANT: Enable eager execution
-    tf.compat.v1.enable_eager_execution()
-
-    tf.random.set_random_seed(42)   # Fix random seed
+    tf.random.set_seed(42)   # Fix random seed
 
     # Load data
     X, y = load_iris(True)
