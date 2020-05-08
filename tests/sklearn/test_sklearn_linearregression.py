@@ -38,6 +38,10 @@ def test_linearregression():
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(np.array([x_cf])))
 
+    cf = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=True)
+    assert y_target_done(cf["y_cf"])
+    assert y_target_done(model.predict(np.array([cf["x_cf"]])))
+
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target, done=y_target_done, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(np.array([x_cf])))

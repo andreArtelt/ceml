@@ -34,6 +34,10 @@ def test_gaussiannaivebayes():
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
     
+    cf = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=True)
+    assert cf["y_cf"] == 0
+    assert model.predict(np.array([cf["x_cf"]])) == 0
+
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
@@ -97,15 +101,17 @@ def test_gaussiannaivebayes():
     model.fit(X_train, y_train)
 
     x_orig = X_test[1:4][0,:]
-    print(model.predict_proba(np.array([x_orig])))
     assert model.predict([x_orig]) == 0
 
     features_whitelist = None
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=1, features_whitelist=features_whitelist, optimizer="mp", return_as_dict=False)
     assert y_cf == 1
-    print(model.predict_proba(np.array([x_cf])))
     assert model.predict(np.array([x_cf])) == 1
+
+    cf = generate_counterfactual(model, x_orig, y_target=1, features_whitelist=features_whitelist, optimizer="mp", return_as_dict=True)
+    assert cf["y_cf"] == 1
+    assert model.predict(np.array([cf["x_cf"]])) == 1
 
     x_orig = X_test[0,:]
     print(model.predict_proba(np.array([x_orig])))
@@ -113,7 +119,6 @@ def test_gaussiannaivebayes():
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, optimizer="mp", return_as_dict=False)
     assert y_cf == 0
-    print(model.predict_proba(np.array([x_cf])))
     assert model.predict(np.array([x_cf])) == 0
 
     # Other stuff

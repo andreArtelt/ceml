@@ -62,6 +62,10 @@ def test_softmaxregression():
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 
+    cf = generate_counterfactual(model, x_orig, 0, return_as_dict=True) # Compute counterfactual explanation
+    assert cf["y_cf"]== 0
+    assert model.predict(np.array([cf["x_cf"]])) == 0
+
     # Multiclass classification problem
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -84,6 +88,10 @@ def test_softmaxregression():
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
+
+    cf = generate_counterfactual(model, x_orig, 0, return_as_dict=True)
+    assert cf["y_cf"] == 0
+    assert model.predict(np.array([cf["x_cf"]])) == 0
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
     assert y_cf == 0
