@@ -121,6 +121,8 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
         """
         if not isinstance(model, LinearDiscriminantAnalysis):
             raise TypeError(f"model has to be an instance of 'sklearn.discriminant_analysis.LinearDiscriminantAnalysis' but not of {type(model)}")
+        if not hasattr(model, "covariance_"):
+            raise AttributeError("You have to set store_covariance=True when instantiating a new sklearn.discriminant_analysis.LinearDiscriminantAnalysis model")
 
         return Lda(model)
     

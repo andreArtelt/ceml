@@ -124,6 +124,8 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
         """
         if not isinstance(model, QuadraticDiscriminantAnalysis):
             raise TypeError(f"model has to be an instance of 'sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis' but not of {type(model)}")
+        if not hasattr(model, "covariance_"):
+            raise AttributeError("You have to set store_covariance=True when instantiating a new sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis model")
 
         return Qda(model)
     
