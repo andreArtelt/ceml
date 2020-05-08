@@ -128,7 +128,7 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
         return Qda(model)
     
     def _build_constraints(self, var_X, var_x, y):
-        i = y
+        i = int(y)
         j = 0 if y == 1 else 1
 
         A = .5 * ( self.mymodel.sigma_inv[i] - self.mymodel.sigma_inv[j])

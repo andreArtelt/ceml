@@ -128,8 +128,8 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
         constraints = []
 
         i = y
-        q_i = np.dot(self.mymodel.sigma_inv, self.mymodel.means[i])
-        b_i = np.log(self.mymodel.class_priors[i]) - .5 * np.dot( self.mymodel.means[i], np.dot(self.mymodel.sigma_inv, self.mymodel.means[i]))
+        q_i = np.dot(self.mymodel.sigma_inv, self.mymodel.means[i].T)
+        b_i = np.log(self.mymodel.class_priors[i]) - .5 * np.dot( self.mymodel.means[i], np.dot(self.mymodel.sigma_inv, self.mymodel.means[i].T))
 
         for j in range(len(self.mymodel.means)):
             if i == j:
