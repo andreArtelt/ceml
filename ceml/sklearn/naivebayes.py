@@ -132,7 +132,7 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
         b = (self.mymodel.means[j, :] / self.mymodel.variances[j, :]) - (self.mymodel.means[i, :] / self.mymodel.variances[i, :])
         c = np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[j,k])) - ((self.mymodel.means[j,k]**2) / (2.*self.mymodel.variances[j,k])) for k in range(self.mymodel.dim)]) - np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[i,k])) - ((self.mymodel.means[i,k]**2) / (2.*self.mymodel.variances[i,k])) for k in range(self.mymodel.dim)])
 
-        return [cp.trace(A @ var_X) + var_x.T @ b + c + self.epsilon <= 0]
+        return [cp.trace(A @ var_X) + b @ var_x + c + self.epsilon <= 0]
 
     def _build_solve_dcqp(self, x_orig, y_target, regularization, features_whitelist):
         Q0 = np.eye(self.mymodel.dim)   # TODO: Can be ignored if regularization != l2
