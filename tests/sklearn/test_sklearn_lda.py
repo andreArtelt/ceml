@@ -34,6 +34,14 @@ def test_lda():
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 1, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
+    assert y_cf == 1
+    assert model.predict(np.array([x_cf])) == 1
+
+    cf = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=True)
+    assert cf["y_cf"] == 0
+    assert model.predict(np.array([cf["x_cf"]])) == 0
+
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
@@ -90,3 +98,10 @@ def test_lda():
     from ceml.sklearn import LdaCounterfactual
     with pytest.raises(TypeError):
         LdaCounterfactual(sklearn.linear_model.LogisticRegression())
+
+    model = LinearDiscriminantAnalysis()
+    model.fit(X_train, y_train)
+    with pytest.raises(AttributeError):
+        LdaCounterfactual(model)
+    with pytest.raises(AttributeError):
+        generate_counterfactual(model, x_orig, 0)
