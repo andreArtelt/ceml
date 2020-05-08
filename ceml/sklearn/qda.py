@@ -170,7 +170,10 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
         if self.model.predict([xcf]) != y_target:
             raise Exception("No counterfactual found - Consider changing parameters 'regularization', 'features_whitelist', 'optimizer' and try again")
 
-        return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_target, delta
+        if return_as_dict is True:
+            return self._SklearnCounterfactual__build_result_dict(xcf, y_target, delta)
+        else:
+            return xcf, y_target, delta
 
 
 def qda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):

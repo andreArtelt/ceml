@@ -127,7 +127,10 @@ class LinearRegressionCounterfactual(SklearnCounterfactual, MathematicalProgram,
         delta = x_orig - xcf
         y_cf = self.model.predict([xcf])
 
-        return self.__build_result_dict(xcf, y_target, delta) if return_as_dict else xcf, y_cf, delta
+        if return_as_dict is True:
+            return self._SklearnCounterfactual__build_result_dict(xcf, y_target, delta)
+        else:
+            return xcf, y_target, delta
 
 
 def linearregression_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="mp", return_as_dict=True, done=None):
