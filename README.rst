@@ -98,7 +98,7 @@ Documentation is available on readthedocs:`https://ceml.readthedocs.io/en/latest
 License
 -------
 
-MIT license - See `LICENSE.md <LICENSE.md>`_
+MIT license - See `LICENSE <LICENSE>`_
 
 How to cite?
 ------------
