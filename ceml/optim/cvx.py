@@ -349,15 +349,12 @@ class PenaltyConvexConcaveProcedure():
 
             # Variables
             x = cp.Variable(self.dim)
-            beta = cp.Variable(self.dim)
             s = cp.Variable(len(self.A0s))
 
             # Constants
             s_z = np.zeros(len(self.A0s))
             s_c = np.ones(len(self.A0s))
-            z = np.zeros(self.dim)
             c = np.ones(self.dim)
-            I = np.eye(self.dim)
 
             # Build constraints
             constraints = []
@@ -385,12 +382,6 @@ class PenaltyConvexConcaveProcedure():
                     a = np.array(a)
 
                     constraints += [A @ x == a]
-
-            # If necessary, construct the weight matrix for the weighted Manhattan distance
-            Upsilon = None
-            if self.mad is not None:
-                alpha = 1. / self.mad
-                Upsilon = np.diag(alpha)
 
             # Build the final program
             f = None
