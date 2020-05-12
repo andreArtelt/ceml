@@ -341,7 +341,6 @@ class PipelineCounterfactual(SklearnCounterfactual):
             # Concatenate affine mappings and add it to the mathematical program
             A, b = concatenate_affine_mappings(preprocessings)
             model.set_affine_preprocessing(A, b)
-            #print(A, b)
 
             # Compute counterfactual
             model.model_predict = self.model.predict  # Make sure that the whole pipeline is called when making a prediction

@@ -173,7 +173,20 @@ class SklearnCounterfactual(Counterfactual, ABC):
                 optimizer = "nelder-mead"
 
         if optimizer == "mp" and isinstance(self, MathematicalProgram):
-            return self.solve(x, y_target, regularization, features_whitelist, return_as_dict)
+            # Check if the prediction of the given input is already consistent with y_target
+            done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
+            self.warn_if_already_done(x, done)
+            
+            # Compute counterfactual
+            x_cf, y_cf, delta = self.solve(x, y_target, regularization, features_whitelist, False)
+            
+            if done(y_cf) == True:
+                if return_as_dict is True:
+                    return self.__build_result_dict(x_cf, y_cf, delta)
+                else:
+                    return x_cf, y_cf, delta
+            
+            raise Exception("No counterfactual found - Consider changing parameters 'C', 'regularization', 'features_whitelist', 'optimizer' and try again")
         else:
             # Hide the input in a wrapper if we can use a subset of features only
             input_wrapper, x_orig, pred, grad_mask = self.wrap_input(features_whitelist, x, optimizer)

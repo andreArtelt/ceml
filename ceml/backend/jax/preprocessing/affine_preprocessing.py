@@ -13,9 +13,11 @@ class AffinePreprocessing():
 
 
 def concatenate_affine_mappings(mappings):
-    A = reduce(np.matmul, [m.A for m in mappings])
+    A = reduce(np.matmul, reversed([m.A for m in mappings]))
     b = mappings[-1].b
     if len(mappings) > 1:
-        b += reduce(np.matmul, [np.dot(mappings[i].A, mappings[i-1].b) for i in range(1, len(mappings))])
+        b = np.dot(mappings[1].A, mappings[0].b) + mappings[1].b
+        for i in range(2, len(mappings)):
+            b = np.dot(mappings[i].A, b) + mappings[i].b
 
     return A, b
