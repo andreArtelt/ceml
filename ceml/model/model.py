@@ -10,7 +10,7 @@ class Model(ABC):
     The class :class:`Model` can not be instantiated because it contains an abstract method. 
     """
     def __init__(self):
-        super().__init__()
+        pass
     
     def __call__(self, x):
         return self.predict(x)
@@ -36,7 +36,7 @@ class ModelWithLoss(Model):
     The class :class:`ModelWithLoss` can not be instantiated because it contains an abstract method. 
     """
     def __init__(self):
-        super(ModelWithLoss, self).__init__()
+        pass
 
     @abstractmethod
     def get_loss(self, y_target, pred=None):

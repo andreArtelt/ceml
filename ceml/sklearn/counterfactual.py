@@ -32,8 +32,12 @@ class SklearnCounterfactual(Counterfactual, ABC):
     def __init__(self, model):
         self.model = model
         self.mymodel = self.rebuild_model(model)
+        self.model_predict = self.model.predict
 
         super(SklearnCounterfactual, self).__init__()
+
+    def _model_predict(self, x):
+        return self.model_predict(x)
 
     @abstractmethod
     def rebuild_model(self, model):
@@ -82,7 +86,7 @@ class SklearnCounterfactual(Counterfactual, ABC):
         solver = prepare_optim(optimizer, loss, x0, loss_grad)
 
         x_cf = input_wrapper(solver())
-        y_cf = self.model.predict([x_cf])[0]
+        y_cf = self._model_predict([x_cf])[0]
         delta = x - x_cf
 
         if return_as_dict is True:

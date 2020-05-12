@@ -26,9 +26,21 @@ class ConvexQuadraticProgram(ABC):
     """
     def __init__(self):
         self.epsilon = 1e-2
+        self.A = None
+        self.b = None
 
         super().__init__()
     
+    def set_affine_preprocessing(self, A, b):
+        self.A = A
+        self.b = b
+
+    def _apply_affine_preprocessing(self, var_x):
+        if self.A is not None and self.b is not None:
+            return self.A @ var_x + self.b
+        else:
+            return var_x
+
     @abstractmethod
     def _build_constraints(self, var_x, y):
         """Creates and returns all constraints.

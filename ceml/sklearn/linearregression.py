@@ -113,19 +113,22 @@ class LinearRegressionCounterfactual(SklearnCounterfactual, MathematicalProgram,
     def _build_constraints(self, var_x, y):
         constraints = []
 
-        constraints.append(self.mymodel.w @ var_x + self.mymodel.b - y <= self.epsilon)
-        constraints.append(-self.mymodel.w @ var_x - self.mymodel.b + y <= self.epsilon)
+        # If set, a apply an affine preprocessing to x
+        var_x_ = self._apply_affine_preprocessing(var_x)
+
+        # Build box constraints
+        constraints.append(self.mymodel.w @ var_x_ + self.mymodel.b - y <= self.epsilon)
+        constraints.append(-self.mymodel.w @ var_x_ - self.mymodel.b + y <= self.epsilon)
         
         return constraints
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
         mad = None
         if regularization == "l1":
-            mad = np.ones(self.mymodel.dim)
+            mad = np.ones(x_orig.shape[0])
 
         xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, mad=mad)
         delta = x_orig - xcf
-        y_cf = self.model.predict([xcf])
 
         if return_as_dict is True:
             return self._SklearnCounterfactual__build_result_dict(xcf, y_target, delta)

@@ -331,7 +331,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
             xcf = self._compute_counterfactual_via_convex_quadratic_programming(x_orig, y_target, features_whitelist, regularization)
         delta = x_orig - xcf
 
-        if self.model.predict([xcf]) != y_target:
+        if self._model_predict([xcf]) != y_target:
             raise Exception("No counterfactual found - Consider changing parameters 'regularization', 'features_whitelist', 'optimizer' and try again")
 
         if return_as_dict is True:

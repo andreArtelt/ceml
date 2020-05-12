@@ -2,17 +2,18 @@
 import sklearn.pipeline
 import sklearn_lvq
 
-from .softmaxregression import SoftmaxRegression
+from .softmaxregression import SoftmaxRegression, SoftmaxCounterfactual
 from .naivebayes import GaussianNB
-from .linearregression import LinearRegression
+from .linearregression import LinearRegression, LinearRegressionCounterfactual
 from .knn import KNN
 from .lvq import LVQ
-from .lda import Lda
+from .lda import Lda, LdaCounterfactual
 from .qda import Qda
 from ..model import ModelWithLoss
-from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures, Normalizer, MinMaxScaler
+from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures, Normalizer, MinMaxScaler, AffinePreprocessing, concatenate_affine_mappings
 from ..backend.jax.costfunctions import CostFunctionDifferentiable, RegularizedCost
 from ..costfunctions import RegularizedCost as RegularizedCostNonDifferentiable
+from ..optim.cvx import ConvexQuadraticProgram
 from .utils import build_regularization_loss
 from .counterfactual import SklearnCounterfactual
 
@@ -92,41 +93,76 @@ class PipelineCounterfactual(SklearnCounterfactual):
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
     def __init__(self, model):
+        self.last_model_sklearn_counterfactual = None
+
         super(PipelineCounterfactual, self).__init__(model)
 
-    def wrap_model(self, model):
+    def wrap_model(self, model, return_sklearn_counterfactual=False):
         if isinstance(model, sklearn.preprocessing._data.StandardScaler):
-            return StandardScaler(model.mean_ if model.with_mean else 0, model.scale_ if model.with_std else 1)
+            if return_sklearn_counterfactual is False:
+                return StandardScaler(model.mean_ if model.with_mean else 0, model.scale_ if model.with_std else 1)
+            else:
+                raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.preprocessing._data.RobustScaler):
-            return StandardScaler(model.center_  if model.with_centering else 0, model.scale_ if model.with_scaling else 1)
+            if return_sklearn_counterfactual is False:
+                return StandardScaler(model.center_  if model.with_centering else 0, model.scale_ if model.with_scaling else 1)
+            else:
+                raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.preprocessing._data.MaxAbsScaler):
-            return StandardScaler(0, model.scale_)
+            if return_sklearn_counterfactual is False:
+                return StandardScaler(0, model.scale_)
+            else:
+                raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.preprocessing._data.MinMaxScaler):
-            return MinMaxScaler(model.min_, model.scale_)
+            if return_sklearn_counterfactual is False:
+                return MinMaxScaler(model.min_, model.scale_)
+            else:
+                raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.preprocessing.Normalizer):
-            return Normalizer()
+            if return_sklearn_counterfactual is False:
+                return Normalizer()
+            else:
+                raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.decomposition.PCA):
-            return PCA(model.components_)
+            if return_sklearn_counterfactual is False:
+                return PCA(model.components_)
+            else:
+                raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.preprocessing.PolynomialFeatures):
-            return PolynomialFeatures(model.powers_)
+            if return_sklearn_counterfactual is False:
+                return PolynomialFeatures(model.powers_)
+            else:
+                raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.linear_model.LogisticRegression):
-            return SoftmaxRegression(model)
+            return SoftmaxRegression(model) if return_sklearn_counterfactual is False else SoftmaxCounterfactual(model)
         elif isinstance(model, sklearn.linear_model._base.LinearModel):
-            return LinearRegression(model)
+            return LinearRegression(model) if return_sklearn_counterfactual is False else LinearRegressionCounterfactual(model)
         elif isinstance(model, sklearn.naive_bayes.GaussianNB):
-            return GaussianNB(model)
+            if return_sklearn_counterfactual is False:
+                return GaussianNB(model)
+            else:
+                raise NotImplementedError()
         elif isinstance(model, sklearn.discriminant_analysis.LinearDiscriminantAnalysis):
-            return Lda(model)
+            return Lda(model) if return_sklearn_counterfactual is False else LdaCounterfactual(model)
         elif isinstance(model, sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis):
-            return Qda(model)
+            if return_sklearn_counterfactual is False:
+                return Qda(model)
+            else:
+                raise NotImplementedError()
         elif isinstance(model, sklearn.tree.DecisionTreeClassifier) or isinstance(model, sklearn.tree.DecisionTreeRegressor):
             raise NotImplementedError()
         elif isinstance(model, sklearn.ensemble.RandomForestClassifier) or isinstance(model, sklearn.ensemble.RandomForestRegressor):
             raise NotImplementedError()
         elif isinstance(model, sklearn.neighbors.KNeighborsClassifier) or isinstance(model, sklearn.neighbors.KNeighborsRegressor):
-            return KNN(model)
+            if return_sklearn_counterfactual is False:
+                return KNN(model)
+            else:
+                raise NotImplementedError()
         elif any([isinstance(model, t) for t in [sklearn_lvq.GlvqModel, sklearn_lvq.GmlvqModel, sklearn_lvq.LgmlvqModel, sklearn_lvq.RslvqModel, sklearn_lvq.MrslvqModel, sklearn_lvq.LmrslvqModel]]):
-            return LVQ(model)
+            if return_sklearn_counterfactual is False:
+                return LVQ(model)
+            else:
+                raise NotImplementedError()
         else:
             raise ValueError(f"{type(model)} is not supported")
 
@@ -150,10 +186,14 @@ class PipelineCounterfactual(SklearnCounterfactual):
 
         # Rebuild pipeline
         models = []
+        last_model = None
         for _, item in self.model.named_steps.items():
             if item is not None:
+                last_model = item
                 models.append(self.wrap_model(item))
     
+        self.last_model_sklearn_counterfactual = self.wrap_model(last_model, return_sklearn_counterfactual=True)
+
         return PipelineModel(models)
     
     def build_loss(self, regularization, x_orig, y_target, pred, grad_mask, C, input_wrapper):
@@ -207,6 +247,107 @@ class PipelineCounterfactual(SklearnCounterfactual):
             loss = RegularizedCostNonDifferentiable(regularization, penalize_output)
         
         return loss, loss_grad
+
+    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
+        """Computes a counterfactual of a given input `x`.
+
+        Parameters
+        ----------
+        x : `numpy.ndarray`
+            The data point `x` whose prediction has to be explained.
+        y_target : `int` or `float`
+            The requested prediction of the counterfactual.
+        feature_whitelist : `list(int)`, optional
+            List of feature indices (dimensions of the input space) that can be used when computing the counterfactual.
+            
+            If `feature_whitelist` is None, all features can be used.
+
+            The default is None.
+        regularization : `str` or :class:`ceml.costfunctions.costfunctions.CostFunction`, optional
+            Regularizer of the counterfactual. Penalty for deviating from the original input `x`.
+            Supported values:
+            
+                - l1: Penalizes the absolute deviation.
+                - l2: Penalizes the squared deviation.
+
+            `regularization` can be a description of the regularization, an instance of :class:`ceml.costfunctions.costfunctions.CostFunction` (or :class:`ceml.costfunctions.costfunctions.DifferentiableCostFunction` if the cost function is differentiable) or None if no regularization is requested.
+
+            If `regularization` is None, no regularization is used.
+
+            The default is "l1".
+        C : `float` or `list(float)`, optional
+            The regularization strength. If `C` is a list, all values in `C` are tried and as soon as a counterfactual is found, this counterfactual is returned and no other values of `C` are tried.
+
+            If no regularization is used (`regularization=None`), `C` is ignored.
+
+            The default is 1.0
+        optimizer : `str` or instance of :class:`ceml.optim.optimizer.Optimizer`, optional
+            Name/Identifier of the optimizer that is used for computing the counterfactual.
+            See :func:`ceml.optim.optimizer.prepare_optim` for details.
+
+            Use "auto" if you do not know what optimizer to use - a suitable optimizer is chosen automatically.
+
+            As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
+
+            Some models (see paper) support the use of mathematical programs for computing counterfactuals. In this case, you can use the option "mp" - please read the documentation of the corresponding model for further information.
+
+            The default is "auto".
+        return_as_dict : `boolean`, optional
+            If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
+            If False, the results are returned as a triple.
+
+            The default is True.
+        done : `callable`, optional
+            A callable that returns `True` if a counterfactual with a given output/prediction is accepted and `False` otherwise.
+
+            If `done` is None, the output/prediction of the counterfactual must match `y_target` exactly.
+
+            The default is None.
+
+            Note
+            ----
+            In case of a regression it might not always be possible to achieve a given output/prediction exactly.
+
+        Returns
+        -------
+        `dict` or `triple`
+            A dictionary where the counterfactual is stored in 'x_cf', its prediction in 'y_cf' and the changes to the original input in 'delta'.
+
+            (x_cf, y_cf, delta) : triple if `return_as_dict` is False
+        
+        Raises
+        ------
+        Exception
+            If no counterfactual was found.
+        """
+        if optimizer == "auto":
+            # Check if we can use a mathematical program
+            if isinstance(self.last_model_sklearn_counterfactual, ConvexQuadraticProgram): # TODO: Support SDPs and DCPs
+                if all([isinstance(m, AffinePreprocessing) for m in self.mymodel.models[:-1]]):
+                    optimizer = "mp"
+            else:   # Use Downhill-Simplex method otherwise
+                optimizer = "nelder-mead"
+
+        if optimizer == "mp":
+            model = self.last_model_sklearn_counterfactual
+            preprocessings = self.mymodel.models[:-1]
+
+            # Check types
+            if not isinstance(model, ConvexQuadraticProgram):
+                raise TypeError(f"The last model in the pipeline must be an instance of 'ceml.optim.ConvexQuadraticProgram' but not of {type(model)}")
+            if not all([isinstance(m, AffinePreprocessing) for m in preprocessings]):
+                raise TypeError("All models (except the last one) in the pipeline must be an instance of an affine mapping('ceml.backend.jax.AffinePreprocessing')")
+
+            # Concatenate affine mappings and add it to the mathematical program
+            A, b = concatenate_affine_mappings(preprocessings)
+            model.set_affine_preprocessing(A, b)
+            #print(A, b)
+
+            # Compute counterfactual
+            model.model_predict = self.model.predict  # Make sure that the whole pipeline is called when making a prediction
+            return model.solve(x, y_target, regularization, features_whitelist, return_as_dict)
+        else:
+            return SklearnCounterfactual.compute_counterfactual(self, x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
 
 
 def pipeline_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
@@ -285,8 +426,5 @@ def pipeline_generate_counterfactual(model, x, y_target, features_whitelist=None
         If no counterfactual was found.
     """
     cf = PipelineCounterfactual(model)
-
-    if optimizer == "auto":
-        optimizer = "nelder-mead"
 
     return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)

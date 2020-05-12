@@ -127,7 +127,11 @@ class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQu
     def _build_constraints(self, var_x, y):
         constraints = []
         
-        if self.mymodel.is_multiclass is True:
+        # If set, a apply an affine preprocessing to x
+        var_x_ = self._apply_affine_preprocessing(var_x)
+
+        # Build constraints
+        if self.mymodel.is_multiclass is True:  # Multiclass classifier
             i = y
             w_i = self.mymodel.w[i,:]
             b_i = self.mymodel.b[i]
@@ -139,22 +143,22 @@ class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQu
                 w_j = self.mymodel.w[j,:]
                 b_j = self.mymodel.b[j]
                 
-                constraints.append(w_i.T @ var_x + b_i >= w_j.T @ var_x + b_j + self.epsilon)
-        else:
+                constraints.append(w_i.T @ var_x_ + b_i >= w_j.T @ var_x_ + b_j + self.epsilon)
+        else:   # Binary classifier
             y_ = -1 if y == 0 else 1
-            constraints.append(y_ * (var_x.T @ self.mymodel.w.flatten() + self.mymodel.b.flatten()) >= self.epsilon)
+            constraints.append(y_ * (var_x_.T @ self.mymodel.w.flatten() + self.mymodel.b.flatten()) >= self.epsilon)
 
         return constraints
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
         mad = None
         if regularization == "l1":
-            mad = np.ones(self.mymodel.dim)
+            mad = np.ones(x_orig.shape[0])
 
         xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, mad=mad)
         delta = x_orig - xcf
 
-        if self.model.predict([xcf]) != y_target:
+        if self._model_predict([xcf]) != y_target:
             raise Exception("No counterfactual found - Consider changing parameters 'regularization', 'features_whitelist', 'optimizer' and try again")
 
         if return_as_dict is True:

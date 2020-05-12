@@ -164,7 +164,7 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
             xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist)
         delta = x_orig - xcf
 
-        if self.model.predict([xcf]) != y_target:
+        if self._model_predict([xcf]) != y_target:
             raise Exception("No counterfactual found - Consider changing parameters 'regularization', 'features_whitelist', 'optimizer' and try again")
 
         if return_as_dict is True:

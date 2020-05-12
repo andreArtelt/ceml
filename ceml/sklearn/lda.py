@@ -129,30 +129,34 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
     def _build_constraints(self, var_x, y):
         constraints = []
 
+        # If set, a apply an affine preprocessing to x
+        var_x_ = self._apply_affine_preprocessing(var_x)
+
+        # Build constraints
         i = y
         q_i = np.dot(self.mymodel.sigma_inv, self.mymodel.means[i].T)
         b_i = np.log(self.mymodel.class_priors[i]) - .5 * np.dot( self.mymodel.means[i], np.dot(self.mymodel.sigma_inv, self.mymodel.means[i].T))
 
-        for j in range(len(self.mymodel.means)):
+        for j in range(len(self.mymodel.means)):    # One vs. One
             if i == j:
                 continue
             
             q_j = np.dot(self.mymodel.sigma_inv, self.mymodel.means[j])
             b_j = np.log(self.mymodel.class_priors[j]) - .5 * np.dot(self.mymodel.means[j], np.dot(self.mymodel.sigma_inv, self.mymodel.means[j]))
 
-            constraints.append(q_i.T @ var_x + b_i >= q_j.T @ var_x + b_j + self.epsilon)
+            constraints.append(q_i.T @ var_x_ + b_i >= q_j.T @ var_x_ + b_j + self.epsilon)
 
         return constraints
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
         mad = None
         if regularization == "l1":
-            mad = np.ones(self.mymodel.dim)
+            mad = np.ones(x_orig.shape[0])
 
         xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, mad=mad)
         delta = x_orig - xcf
 
-        if self.model.predict([xcf]) != y_target:
+        if self._model_predict([xcf]) != y_target:
             raise Exception("No counterfactual found - Consider changing parameters 'regularization', 'features_whitelist', 'optimizer' and try again")
 
         if return_as_dict is True:
