@@ -168,6 +168,7 @@ def test_pipeline_scaler_softmaxregression():
 
     # Create and fit model
     scaler = StandardScaler()
+    pca = PCA(n_components=2)
 
     model = LogisticRegression(solver='lbfgs', multi_class='multinomial')
     model = make_pipeline(scaler, model)
@@ -179,6 +180,38 @@ def test_pipeline_scaler_softmaxregression():
 
     # Compute counterfactual
     compute_counterfactuals(model, x_orig, 0)
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=None, optimizer="mp", regularization=None, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=None, optimizer="mp", regularization="l1", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    features_whitelist = [0, 1, 2]
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, optimizer="mp", regularization=None, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, optimizer="mp", regularization="l1", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    # More than one preprocessing
+    model = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+    model = make_pipeline(pca, scaler, model)
+    model.fit(X_train, y_train)
+
+    assert model.predict([x_orig]) == 2
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=None, optimizer="mp", regularization=None, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=None, optimizer="mp", regularization="l1", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
 
 
 def test_pipeline_robustscaler_softmaxregression():
@@ -242,6 +275,23 @@ def test_pipeline_minmaxscaler_softmaxregression():
 
     # Compute counterfactual
     compute_counterfactuals_2(model, x_orig, 0)
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=None, optimizer="mp", regularization=None, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=None, optimizer="mp", regularization="l1", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    features_whitelist = [0, 1, 2]
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, optimizer="mp", regularization=None, return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
+
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, optimizer="mp", regularization="l1", return_as_dict=False)
+    assert y_cf == 0
+    assert model.predict(np.array([x_cf])) == 0
 
 
 def test_pipeline_normalizer_softmaxregression():
@@ -331,5 +381,13 @@ def test_pipeline_pca_linearregression():
     y_target_done = lambda z: np.abs(z - y_target) < 3.
 
     x_cf, y_cf, _ = generate_counterfactual(model, x_orig, y_target=y_target, done=y_target_done, regularization="l1", C=0.1, features_whitelist=None, optimizer="bfgs", return_as_dict=False)
+    assert y_target_done(y_cf)
+    assert y_target_done(model.predict(np.array([x_cf])))
+
+    x_cf, y_cf, _ = generate_counterfactual(model, x_orig, y_target=y_target, done=y_target_done, regularization="l1", features_whitelist=None, optimizer="mp", return_as_dict=False)
+    assert y_target_done(y_cf)
+    assert y_target_done(model.predict(np.array([x_cf])))
+
+    x_cf, y_cf, _ = generate_counterfactual(model, x_orig, y_target=y_target, done=y_target_done, regularization="l2", features_whitelist=None, optimizer="mp", return_as_dict=False)
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(np.array([x_cf])))
