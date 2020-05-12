@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 import sklearn.pipeline
 import sklearn_lvq
 
@@ -110,7 +111,7 @@ class PipelineCounterfactual(SklearnCounterfactual):
                 raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.preprocessing._data.MaxAbsScaler):
             if return_sklearn_counterfactual is False:
-                return StandardScaler(0, model.scale_)
+                return StandardScaler(np.zeros(model.scale_.shape[0]), model.scale_)
             else:
                 raise ValueError(f"An implementation of SklearnCounterfactual is not available for {type(model)}")
         elif isinstance(model, sklearn.preprocessing._data.MinMaxScaler):
