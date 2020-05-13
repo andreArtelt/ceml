@@ -16,7 +16,7 @@ PyPi
     pip install ceml
 
 .. note::
-    The package hosted on PyPi uses the cpu only. If you want to use the gpu, you have to install ceml manually - see next section.
+    The package hosted on PyPI uses the cpu only. If you want to use the gpu, you have to install CEML manually - see next section.
 
 
 Git
@@ -35,7 +35,7 @@ Install all requirements (listed in ``requirements.txt``):
     pip install -r requirements.txt
 
 .. note::
-    If you want to use a gpu/tpu, you have to install the gpu version of jax, tensorflow and pytorch manually.
+    If you want to use a gpu/tpu, you have to install the gpu version of jax, tensorflow and PyTorch manually.
     
     Do not use ``pip install -r requirements.txt``
 

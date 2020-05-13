@@ -2,7 +2,7 @@
 Advanced
 *********
 
-ceml can be easily extended and all major components can be customized to fit the users needs.
+CEML can be easily extended and all major components can be customized to fit the users needs.
 
 Below is a (non-exhaustive) list of some (common) use cases:
 

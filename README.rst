@@ -1,11 +1,11 @@
 ****
-ceml
+CEML
 ****
 --------------------------------------------------------
 Counterfactuals for Explaining Machine Learning models
 --------------------------------------------------------
 
-ceml is a Python toolbox for computing counterfactuals. Counterfactuals can be use to explain the predictions of machine learing models.
+CEML is a Python toolbox for computing counterfactuals. Counterfactuals can be use to explain the predictions of machine learing models.
 
 It supports many common machine learning frameworks:
 
@@ -13,7 +13,7 @@ It supports many common machine learning frameworks:
     - PyTorch (1.5.0)
     - Keras & Tensorflow (2.2.0)
 
-Furthermore, ceml is easy to use and can be extended very easily. See the following user guide for more information on how to use and extend ceml.
+Furthermore, CEML is easy to use and can be extended very easily. See the following user guide for more information on how to use and extend CEML.
 
 Installation
 ------------
@@ -27,9 +27,9 @@ PyPI
 
     pip install ceml
 
-**Note**: The package hosted on PyPI uses the cpu only. If you want to use the gpu, you have to install ceml manually - see next section.
+**Note**: The package hosted on PyPI uses the cpu only. If you want to use the gpu, you have to install CEML manually - see next section.
 
-**ATTENTION**: It can happen that the installation of sklearn-lvq fails with the message "numpy is required during installation". In this case you either have to install numpy and scipy first (before running *pip install ceml*), or install ceml manually as described in the next section. 
+**ATTENTION**: It can happen that the installation of sklearn-lvq fails with the message "numpy is required during installation". In this case you either have to install numpy and scipy first (before running *pip install ceml*), or install CEML manually as described in the next section. 
 
 Git
 +++
@@ -102,7 +102,7 @@ MIT license - See `LICENSE <LICENSE>`_
 
 How to cite?
 ------------
-    You can cite ceml by using the following BibTeX entry:
+    You can cite CEML by using the following BibTeX entry:
 
     .. code-block::
 

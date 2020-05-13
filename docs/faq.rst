@@ -2,7 +2,7 @@
 FAQ
 ===
 
-How can I install ceml?
+How can I install CEML?
     .. code:: bash
         
         pip install ceml
@@ -12,23 +12,23 @@ How can I install ceml?
 Under which license is ceml released?
     MIT license - See License_.
 
-How can I cite ceml?
-    You can cite ceml by using the following BibTeX entry:
+How can I cite CEML?
+    You can cite CEML by using the following BibTeX entry:
 
     .. code-block::
 
         @misc{ceml,
                 author = {André Artelt},
                 title = {CEML: Counterfactuals for Explaining Machine Learning models - A Python toolbox},
-                year = {2019},
+                year = {2019 - 2020},
                 publisher = {GitHub},
                 journal = {GitHub repository},
                 howpublished = {\url{https://www.github.com/andreArtelt/ceml}}
             }
 
-    *Please consider citing ceml if it helps you in your research.*
+    *Please consider citing CEML if it helps you in your research.*
 
-Is citing ceml mandatory?
+Is citing CEML mandatory?
     No, of course not. But it is best practice to cite everything you have used (literature as well as software).
 
 How can I submit a bug report?
