@@ -10,3 +10,4 @@ _templates/
 .pytest_cache
 .coverage*
 htmlcov/
+outcmaes/
