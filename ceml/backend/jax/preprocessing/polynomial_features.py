@@ -7,10 +7,10 @@ class PolynomialFeatures(Model):
     """
     Wrapper for polynomial feature transformation.
     """
-    def __init__(self, powers):
+    def __init__(self, powers, **kwds):
         self.powers = powers
 
-        super(PolynomialFeatures, self).__init__()
+        super().__init__(**kwds)
     
     def predict(self, x):
         """

@@ -10,8 +10,8 @@ class CostFunctionDifferentiableJax(CostFunctionDifferentiable):
     """
     Base class of differentiable cost functions implemented in jax.
     """
-    def __init__(self, input_to_output=None):
-        super(CostFunctionDifferentiableJax, self).__init__(input_to_output)
+    def __init__(self, input_to_output=None, **kwds):
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def grad(self, mask=None):
         """
@@ -42,12 +42,12 @@ class TopKMinOfListDistCost(CostFunctionDifferentiableJax):
     """
     Computes the sum of the distances to the k closest samples.
     """
-    def __init__(self, dist, samples, k, input_to_output=None):
+    def __init__(self, dist, samples, k, input_to_output=None, **kwds):
         self.dist = dist
         self.samples = samples
         self.k = k
 
-        super(TopKMinOfListDistCost, self).__init__(input_to_output)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, x):
         """
@@ -61,8 +61,8 @@ class DummyCost(CostFunctionDifferentiableJax):
     """
     Dummy cost function - always returns zero.
     """
-    def __init__(self):
-        super(DummyCost, self).__init__()
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -75,10 +75,10 @@ class L1Cost(CostFunctionDifferentiableJax):
     """
     L1 cost function.
     """
-    def __init__(self, x_orig, input_to_output=None):
+    def __init__(self, x_orig, input_to_output=None, **kwds):
         self.x_orig = x_orig
 
-        super(L1Cost, self).__init__(input_to_output)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, x):
         """
@@ -91,10 +91,10 @@ class L2Cost(CostFunctionDifferentiableJax):
     """
     L2 cost function.
     """
-    def __init__(self, x_orig, input_to_output=None):
+    def __init__(self, x_orig, input_to_output=None, **kwds):
         self.x_orig = x_orig
 
-        super(L2Cost, self).__init__(input_to_output)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, x):
         """
@@ -107,11 +107,11 @@ class LMadCost(CostFunctionDifferentiableJax):
     """
     Manhattan distance weighted feature-wise with the inverse median absolute deviation (MAD).
     """
-    def __init__(self, x_orig, mad, input_to_output=None):
+    def __init__(self, x_orig, mad, input_to_output=None, **kwds):
         self.x_orig = x_orig
         self.mad = mad
 
-        super(LMadCost, self).__init__(input_to_output=None)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, x):
         """
@@ -124,11 +124,11 @@ class MinOfListDistCost(CostFunctionDifferentiableJax):
     """
     Minimum distance to a list of data points.
     """
-    def __init__(self, dist, samples, input_to_output=None):
+    def __init__(self, dist, samples, input_to_output=None, **kwds):
         self.dist = dist
         self.samples = samples
 
-        super(MinOfListDistCost, self).__init__(input_to_output)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, x):
         """
@@ -143,11 +143,11 @@ class MinOfListDistExCost(CostFunctionDifferentiableJax):
 
     In contrast to :class:`MinOfListDistCost`, :class:`MinOfListDistExCost` uses a user defined metric matrix (distortion of the Euclidean distance).
     """
-    def __init__(self, omegas, samples, input_to_output=None):
+    def __init__(self, omegas, samples, input_to_output=None, **kwds):
         self.omegas = omegas
         self.samples = samples
 
-        super(MinOfListDistExCost, self).__init__(input_to_output)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, x):
         """
@@ -160,10 +160,10 @@ class NegLogLikelihoodCost(CostFunctionDifferentiableJax):
     """
     Negative-log-likelihood cost function.
     """
-    def __init__(self, input_to_output, y_target):
+    def __init__(self, input_to_output, y_target, **kwds):
         self.y_target = y_target
         
-        super(NegLogLikelihoodCost, self).__init__(input_to_output)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, y):
         """
@@ -176,10 +176,10 @@ class SquaredError(CostFunctionDifferentiableJax):
     """
     Squared error cost function.
     """
-    def __init__(self, input_to_output, y_target):
+    def __init__(self, input_to_output, y_target, **kwds):
         self.y_target = y_target
 
-        super(SquaredError, self).__init__(input_to_output)
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     def score_impl(self, y):
         """
@@ -192,7 +192,7 @@ class RegularizedCost(CostFunctionDifferentiableJax):
     """
     Regularized cost function.
     """
-    def __init__(self, penalize_input, penalize_output, C=1.0):
+    def __init__(self, penalize_input, penalize_output, C=1.0, **kwds):
         if not isinstance(penalize_input, CostFunctionDifferentiable):
             raise TypeError(f"penalize_input has to be an instance of 'CostFunctionDifferentiable' but not of '{type(penalize_input)}'")
         if not isinstance(penalize_output, CostFunctionDifferentiable):
@@ -202,7 +202,7 @@ class RegularizedCost(CostFunctionDifferentiableJax):
         self.penalize_output = penalize_output
         self.C = C
 
-        super(RegularizedCost, self).__init__()
+        super().__init__(**kwds)
 
     def score_impl(self, x):
         """

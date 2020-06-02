@@ -27,7 +27,7 @@ class TfCounterfactual(Counterfactual):
     Exception
         If eager execution is not enabled.
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         if not tf.executing_eagerly():
             raise Exception("Eager mode is not enabled - Please enable eager execution")
         if not isinstance(model, ModelWithLoss):
@@ -35,7 +35,7 @@ class TfCounterfactual(Counterfactual):
         
         self.model = model
 
-        super(TfCounterfactual, self).__init__()
+        super().__init__(**kwds)
     
     def wrap_input(self, features_whitelist, x, optimizer):
         return wrap_input(features_whitelist, x, self.model, optimizer)

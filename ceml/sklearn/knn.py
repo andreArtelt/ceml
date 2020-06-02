@@ -46,7 +46,7 @@ class KNN(ModelWithLoss):
     TypeError
         If `model` is not an instance of :class:`sklearn.neighbors.KNeighborsClassifier` or :class:`sklearn.neighbors.KNeighborsRegressor`
     """
-    def __init__(self, model, dist="l2"):
+    def __init__(self, model, dist="l2", **kwds):
         if not isinstance(model, sklearn.neighbors.KNeighborsClassifier) and not isinstance(model, sklearn.neighbors.KNeighborsRegressor):
             raise TypeError(f"model has to be an instance of 'sklearn.neighbors.KNeighborsClassifier' or 'sklearn.neighbors.KNeighborsRegressor' but not of {type(model)}")
 
@@ -55,7 +55,7 @@ class KNN(ModelWithLoss):
         self.n_neighbors = model.n_neighbors
         self.dist = dist
 
-        super(KNN, self).__init__()
+        super().__init__(**kwds)
     
     def predict(self, x):
         """
@@ -106,10 +106,10 @@ class KnnCounterfactual(SklearnCounterfactual):
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model, dist="l2"):
+    def __init__(self, model, dist="l2", **kwds):
         self.dist = dist    # TODO: Extract distance from model
 
-        super(KnnCounterfactual, self).__init__(model)
+        super().__init__(model=model, **kwds)
 
     def rebuild_model(self, model):
         """Rebuilds a :class:`sklearn.neighbors.KNeighborsClassifier` or :class:`sklearn.neighbors.KNeighborsRegressor` model.

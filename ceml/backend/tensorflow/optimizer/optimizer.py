@@ -12,7 +12,7 @@ class TfOptimizer(Optimizer):
 
     The :class:`TfOptimizer` provides an interface for wrapping an arbitrary tensorflow optimization algorithm (see :class:`tf.train.Optimizer`) and minimizing a given loss function.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.model = None
         self.loss = None
         self.tol = None
@@ -24,7 +24,7 @@ class TfOptimizer(Optimizer):
 
         self.grad_mask = None
 
-        super(TfOptimizer, self).__init__()
+        super().__init__(**kwds)
     
     def init(self, model, loss, x, optim, tol=None, max_iter=1, grad_mask=None):
         """

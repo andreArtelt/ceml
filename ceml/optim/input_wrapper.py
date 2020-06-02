@@ -21,13 +21,13 @@ class InputWrapper():
     ValueError
         If `features_whitelist` is an empty list.
     """
-    def __init__(self, features_whitelist, x_orig):
+    def __init__(self, features_whitelist, x_orig, **kwds):
         self.x_orig = x_orig
         self.features_whitelist = features_whitelist
         if self.features_whitelist == []:
             raise ValueError("'features_whitelist' does not contain any features. If you do not want to restrict the features, use 'features_whitelist=None' instead of '[]'")
         
-        super(InputWrapper, self).__init__()
+        super().__init__(**kwds)
     
     def complete(self, x):
         """Completing a given input.

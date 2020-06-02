@@ -39,7 +39,7 @@ class Qda(ModelWithLoss):
     TypeError
         If `model` is not an instance of :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         if not isinstance(model, QuadraticDiscriminantAnalysis):
             raise TypeError(f"model has to be an instance of 'sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis' but not of {type(model)}")
 
@@ -50,7 +50,7 @@ class Qda(ModelWithLoss):
         self.dim = self.means.shape[1]
         self.is_binary = self.means.shape[0] == 2
         
-        super(Qda, self).__init__()
+        super().__init__(**kwds)
     
     def predict(self, x):
         """Predict the output of a given input.
@@ -104,8 +104,8 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model):
-        super(QdaCounterfactual, self).__init__(model)
+    def __init__(self, model, **kwds):
+        super().__init__(model=model, **kwds)
     
     def rebuild_model(self, model):
         """Rebuild a :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis` model.

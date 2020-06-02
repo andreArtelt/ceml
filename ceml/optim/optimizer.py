@@ -15,8 +15,8 @@ class Optimizer(ABC):
     ----
     Any class derived from :class:`Optimizer` has to implement the abstract methods `init`, `__call__` and `is_grad_based`.
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
     
     @abstractmethod
     def init(self, ):
@@ -167,13 +167,13 @@ class NelderMead(Optimizer):
     ----
     The Nelder-Mead algorithm is a gradient-free optimization algorithm.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.f = None
         self.x0 = None
         self.tol = None
         self.max_iter = None
 
-        super(NelderMead, self).__init__()
+        super().__init__(**kwds)
     
     def init(self, f, x0, tol=None, max_iter=None):
         """
@@ -219,13 +219,13 @@ class Powell(Optimizer):
     ----
     The Powell algorithm is a gradient-free optimization algorithm.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.f = None
         self.x0 = None
         self.tol = None
         self.max_iter = None
 
-        super(Powell, self).__init__()
+        super().__init__(**kwds)
     
     def init(self, f, x0, tol=None, max_iter=None):
         """
@@ -267,14 +267,14 @@ class ConjugateGradients(Optimizer):
     """
     Conjugate gradients optimization algorithm.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.f = None
         self.f_grad = None
         self.x0 = None
         self.tol = None
         self.max_iter = None
 
-        super(ConjugateGradients, self).__init__()
+        super().__init__(**kwds)
     
     def init(self, f, f_grad, x0, tol=None, max_iter=None):
         """
@@ -323,14 +323,14 @@ class BFGS(Optimizer):
     ----
     The BFGS optimization algorithm is a Quasi-Newton method.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.f = None
         self.f_grad = None
         self.x0 = None
         self.tol = None
         self.max_iter = None
 
-        super(BFGS, self).__init__()
+        super().__init__(**kwds)
     
     def init(self, f, f_grad, x0, tol=None, max_iter=None):
         """

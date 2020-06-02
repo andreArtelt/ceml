@@ -26,12 +26,12 @@ class EnsembleVotingCost(CostFunction):
         
         The default is None.
     """
-    def __init__(self, models, y_target, input_wrapper=None, epsilon=0):
+    def __init__(self, models, y_target, input_wrapper=None, epsilon=0, **kwds):
         self.models = models
         self.num_models = len(models)
         self.y_target = y_target if callable(y_target) else lambda y: y == y_target
         
-        super(EnsembleVotingCost, self).__init__(input_wrapper)
+        super().__init__(input_to_output=input_wrapper, **kwds)
     
     def score_impl(self, x):
         """
@@ -53,13 +53,13 @@ class RandomForest(ModelWithLoss):
     TypeError
         If `model` is not an instance of :class:`sklearn.ensemble.RandomForestClassifier` or :class:`sklearn.ensemble.RandomForestRegressor`
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         if not isinstance(model, sklearn.ensemble.RandomForestClassifier) and not isinstance(model, sklearn.ensemble.RandomForestRegressor):
             raise TypeError(f"model has to be an instance of 'sklearn.ensemble.RandomForestClassifier' or 'sklearn.ensemble.RandomForestRegressor' not of {type(model)}")
 
         self.model = model
 
-        super(RandomForest, self).__init__()
+        super().__init__(**kwds)
 
     def predict(self, x):
         """Predict the output of a given input.
@@ -101,8 +101,8 @@ class RandomForestCounterfactual(SklearnCounterfactual):
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model):
-        super(RandomForestCounterfactual, self).__init__(model)
+    def __init__(self, model, **kwds):
+        super().__init__(model=model, **kwds)
     
     def build_loss(self, regularization, x_orig, y_target, pred, grad_mask, C, input_wrapper):
         """

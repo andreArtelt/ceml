@@ -9,8 +9,8 @@ class Counterfactual(ABC):
     ----
     The class :class:`Counterfactual` can not be instantiated because it contains an abstract method. 
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
     
     @abstractmethod
     def compute_counterfactual(self):

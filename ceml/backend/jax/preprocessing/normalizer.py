@@ -8,8 +8,8 @@ class Normalizer(Model):
     """
     Wrapper for the normalizer.
     """
-    def __init__(self):
-        super(Normalizer, self).__init__()
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
     
     def predict(self, x):
         """

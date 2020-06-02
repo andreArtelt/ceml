@@ -12,7 +12,7 @@ class TorchOptimizer(Optimizer):
 
     The :class:`TorchOptimizer` provides an interface for wrapping an arbitrary PyTorch optimization algorithm (see :class:`torch.optim`) and minimizing a given loss function.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.model = None
         self.loss = None
         self.tol = None
@@ -26,7 +26,7 @@ class TorchOptimizer(Optimizer):
 
         self.grad_mask = None
 
-        super(TorchOptimizer, self).__init__()
+        super().__init__(**kwds)
     
     def init(self, model, loss, x, optim, optim_args, lr_scheduler=None, lr_scheduler_args=None, tol=None, max_iter=1, grad_mask=None, device=torch.device("cpu")):
         """

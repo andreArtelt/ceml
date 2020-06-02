@@ -33,7 +33,7 @@ class EvolutionaryOptimizer(Optimizer):
 
         The default is 4.0
     """
-    def __init__(self, population_size=100, select_by_fitness=0.5, mutation_prob=0.1, mutation_scaling=4.):
+    def __init__(self, population_size=100, select_by_fitness=0.5, mutation_prob=0.1, mutation_scaling=4., **kwds):
         self.population = []
         self.population_size = population_size
         self.select_by_fitness = select_by_fitness
@@ -45,7 +45,7 @@ class EvolutionaryOptimizer(Optimizer):
         self.tol = None
         self.max_iter = None
 
-        super(EvolutionaryOptimizer, self).__init__()
+        super().__init__(**kwds)
     
     def init(self, f, x0, tol=None, max_iter=None):
         """

@@ -9,10 +9,10 @@ class CostFunction(ABC):
     ----
     The class :class:`CostFunction` can not be instantiated because it contains an abstract method. 
     """
-    def __init__(self, input_to_output=None):
+    def __init__(self, input_to_output=None, **kwds):
         self.input_to_output = input_to_output if input_to_output is not None else lambda z: z
 
-        super().__init__()
+        super().__init__(**kwds)
     
     def score(self, x):
         return self.score_impl(self.input_to_output(x))
@@ -40,8 +40,8 @@ class CostFunctionDifferentiable(CostFunction):
     ----
     The class :class:`CostFunctionDifferentiable` can not be instantiated because it contains an abstract method. 
     """
-    def __init__(self, input_to_output=None):
-        super(CostFunctionDifferentiable, self).__init__(input_to_output)
+    def __init__(self, input_to_output=None, **kwds):
+        super().__init__(input_to_output=input_to_output, **kwds)
     
     @abstractmethod
     def grad(self, mask=None):
@@ -77,7 +77,7 @@ class RegularizedCost(CostFunction):
     C : `float`
         Regularization strength.
     """
-    def __init__(self, penalize_input, penalize_output, C=1.0):
+    def __init__(self, penalize_input, penalize_output, C=1.0, **kwds):
         if not isinstance(penalize_input, CostFunction):
             raise TypeError(f"penalize_input has to be an instance of 'CostFunction' but not of '{type(penalize_input)}'")
         if not isinstance(penalize_output, CostFunction):
@@ -87,7 +87,7 @@ class RegularizedCost(CostFunction):
         self.penalize_output = penalize_output
         self.C = C
 
-        super(RegularizedCost, self).__init__()
+        super().__init__(**kwds)
 
     def score_impl(self, x):
         """Applying the cost function to a given input.

@@ -8,8 +8,8 @@ import cvxpy as cp
 class MathematicalProgram():
     """Base class for a mathematical program.
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
     @abstractmethod
     def solve(self):
@@ -24,12 +24,12 @@ class ConvexQuadraticProgram(ABC):
     epsilon : `float`
         "Small" non-negative number for relaxing strict inequalities.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.epsilon = 1e-2
         self.A = None
         self.b = None
 
-        super().__init__()
+        super().__init__(**kwds)
     
     def set_affine_preprocessing(self, A, b):
         self.A = A
@@ -153,10 +153,10 @@ class SDP(ABC):
     epsilon : `float`
         "Small" non-negative number for relaxing strict inequalities.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.epsilon = 1e-2
 
-        super().__init__()
+        super().__init__(**kwds)
     
     @abstractmethod
     def _build_constraints(self, var_X, var_x, y):
@@ -256,11 +256,11 @@ class DCQP():
     epsilon : `float`
         "Small" non-negative number for relaxing strict inequalities.
     """
-    def __init__(self):
+    def __init__(self, **kwds):
         self.pccp = None
         self.epsilon = 1e-2
 
-        super().__init__()
+        super().__init__(**kwds)
 
     def build_program(self, model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None):
         """Builds the DCQP.
@@ -332,7 +332,7 @@ class DCQP():
 class PenaltyConvexConcaveProcedure():
     """Implementation of the penalty convex-concave procedure for approximately solving a DCQP.
     """
-    def __init__(self, model, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None):      
+    def __init__(self, model, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None, **kwds):      
         self.model = model
         self.mad = mad
         self.features_whitelist = features_whitelist
@@ -351,6 +351,8 @@ class PenaltyConvexConcaveProcedure():
         
         if not(len(self.A0s) == len(self.A1s) and len(self.A0s) == len(self.bs) and len(self.rs) == len(self.bs)):
             raise ValueError("Inconsistent number of constraint parameters")
+            
+        super().__init__(**kwds)
 
     def _solve(self, prob):
         prob.solve(solver=cp.SCS, verbose=False)
@@ -440,3 +442,176 @@ class PenaltyConvexConcaveProcedure():
             cur_tao *= mu
         
         return xcf
+
+
+#################################################
+# Stuff for computing plausible counterfactuals #
+#################################################
+
+class HighDensityEllipsoids:
+    def __init__(self, X, X_densities, cluster_probs, means, covariances, density_threshold=None, **kwds):
+        self.X = X
+        self.X_densities = X_densities
+        self.density_threshold = density_threshold if density_threshold is not None else float("-inf")
+        self.cluster_probs = cluster_probs
+        self.means = means
+        self.covariances = covariances
+        self.epsilon = 1e-5
+
+        super().__init__(**kwds)
+
+    def compute_ellipsoids(self):        
+        return self.build_solve_opt()
+    
+    def _solve(self, prob):
+        prob.solve(solver=cp.SCS, verbose=False)
+
+    def build_solve_opt(self):
+        n_ellipsoids = self.cluster_probs.shape[1]
+        n_samples = self.X.shape[0]
+        
+        # Variables
+        r = cp.Variable(n_ellipsoids, pos=True)
+
+        # Construct constraints
+        constraints = []
+        for i in range(n_ellipsoids):
+            mu_i = self.means[i]
+            cov_i = np.linalg.inv(self.covariances[i])
+
+            for j in range(n_samples):
+                if self.X_densities[j][i] >= self.density_threshold:  # At least as good as a requested NLL
+                    x_j = self.X[j,:]
+                    
+                    a = (x_j - mu_i)
+                    b = np.dot(a, np.dot(cov_i, a))
+                    constraints.append(b <= r[i])
+
+        # Build the final program
+        f = cp.Minimize(cp.sum(r))
+        prob = cp.Problem(f, constraints)
+
+        # Solve it!
+        self._solve(prob)
+
+        return r.value
+
+
+class PlausibleCounterfactualOfHyperplaneClassifier():
+    def __init__(self, w, b, n_dims, **kwds):
+        self.hyperplane_w = w
+        self.hyperplane_b = b
+
+        self.n_dims = n_dims
+        self.gmm_weights = None
+        self.gmm_means = None
+        self.gmm_covariances = None
+        self.ellipsoids_r = None
+        self.projection_matrix = None
+        self.projection_mean_sub = None
+        self.density_constraint = None
+
+        self.min_density = None
+        self.epsilon = 1e-2
+        self.gmm_cluster_index = 0  # For internal use only!
+
+        super().__init__(**kwds)
+
+    def setup_plausibility_params(self, ellipsoids_r, gmm_weights, gmm_means, gmm_covariances, projection_matrix=None, projection_mean_sub=None, density_constraint=True, density_threshold=-85):
+        self.gmm_weights = gmm_weights
+        self.gmm_means = gmm_means
+        self.gmm_covariances = gmm_covariances
+        self.ellipsoids_r = ellipsoids_r
+        self.projection_matrix = np.eye(self.n_dims) if projection_matrix is None else projection_matrix
+        self.projection_mean_sub = np.zeros(self.n_dims) if projection_mean_sub is None else projection_mean_sub
+        self.density_constraint = density_constraint
+
+        self.min_density = density_threshold
+
+    def _build_constraints_plausibility_opt(self, var_x, y):
+        constraints = []
+        if self.hyperplane_w.shape[0] > 1:
+            for i in range(self.hyperplane_w.shape[0]):
+                if i != y:
+                    constraints += [(self.projection_matrix @ (var_x - self.projection_mean_sub)).T @ (self.hyperplane_w[i,:] - self.hyperplane_w[y,:]) + (self.hyperplane_b[i] - self.hyperplane_b[y]) + self.epsilon <= 0]
+        else:
+            if y == 0:
+                return [(self.projection_matrix @ (var_x - self.projection_mean_sub)).T @ self.hyperplane_w.reshape(-1, 1) + self.hyperplane_b + self.epsilon <= 0]
+            else:
+                return [(self.projection_matrix @ (var_x - self.projection_mean_sub)).T @ self.hyperplane_w.reshape(-1, 1) + self.hyperplane_b - self.epsilon >= 0]
+
+        return constraints
+
+    def compute_plausible_counterfactual(self, x, y, regularizer="l1"):        
+        mad = None
+        if regularizer == "l1":
+            mad = np.ones(x.shape[0])
+        
+        xcf = None
+        s = float("inf")
+        for i in range(self.gmm_weights[y].shape[0]):
+            try:
+                self.gmm_cluster_index = i
+                xcf_ = self.build_solve_plausibility_opt(x, y, mad)
+                if xcf_ is None:
+                    continue
+
+                s_ = None
+                if regularizer == "l1":
+                    s_ = np.sum(np.abs(xcf_ - x))
+                else:
+                    s_ = np.linalg.norm(xcf_ - x, ord=2)
+
+                if s_ <= s:
+                    s = s_
+                    xcf = xcf_
+            except Exception as ex:
+                pass    # TODO: Proper exception handling
+        return xcf
+    
+    def _solve_plausibility_opt(self, prob):
+        prob.solve(solver=cp.SCS, verbose=False)
+
+    def build_solve_plausibility_opt(self, x_orig, y, mad=None):
+        dim = x_orig.shape[0]
+        
+        # Variables
+        x = cp.Variable(dim)
+        beta = cp.Variable(dim)
+
+        # Constants
+        c = np.ones(dim)
+        z = np.zeros(dim)
+        I = np.eye(dim)
+
+        # Construct constraints
+        constraints = self._build_constraints_plausibility_opt(x, y)
+
+        if self.density_constraint is True:
+            i = self.gmm_cluster_index
+            x_i = self.gmm_means[y][i]
+            cov = self.gmm_covariances[y][i]
+            cov = np.linalg.inv(cov)
+
+            constraints += [cp.quad_form(self.projection_matrix @ (x - self.projection_mean_sub) - x_i, cov) - self.ellipsoids_r[i] <= 0] # Numerically much more stable than the explicit density component constraint
+
+        # If necessary, construct the weight matrix for the weighted Manhattan distance
+        Upsilon = None
+        if mad is not None:
+            alpha = 1. / mad
+            Upsilon = np.diag(alpha)
+
+        # Build the final program
+        f = None
+        if mad is not None:
+            f = cp.Minimize(c.T @ beta)    # Minimize (weighted) Manhattan distance
+            constraints += [Upsilon @ (x - x_orig) <= beta, (-1. * Upsilon) @ (x - x_orig) <= beta, I @ beta >= z]
+        else:
+            f = cp.Minimize((1/2)*cp.quad_form(x, I) - x_orig.T@x)  # Minimize L2 distance
+        
+        prob = cp.Problem(f, constraints)
+
+        # Solve it!
+        self._solve_plausibility_opt(prob)
+
+        return x.value

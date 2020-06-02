@@ -55,7 +55,7 @@ class LVQ(ModelWithLoss):
     TypeError
         If `model` is not an instance of :class:`sklearn_lvq.GlvqModel`, :class:`sklearn_lvq.GmlvqModel`, :class:`sklearn_lvq.LgmlvqModel`, :class:`sklearn_lvq.RslvqModel`, :class:`sklearn_lvq.MrslvqModel` or :class:`sklearn_lvq.LmrslvqModel`
     """
-    def __init__(self, model, dist="l2"):
+    def __init__(self, model, dist="l2", **kwds):
         if not any([isinstance(model, t) for t in [sklearn_lvq.GlvqModel, sklearn_lvq.GmlvqModel, sklearn_lvq.LgmlvqModel, sklearn_lvq.RslvqModel, sklearn_lvq.MrslvqModel, sklearn_lvq.LmrslvqModel]]):
             raise TypeError(f"model has to be an instance of 'sklearn_lvq.GlvqModel', 'sklearn_lvq.GmlvqModel', 'sklearn_lvq.LgmlvqModel', 'sklearn_lvq.RslvqModel', 'sklearn_lvq.MrslvqModel' or 'sklearn_lvq.LmrslvqModel' but not of {type(model)}")
         
@@ -78,7 +78,7 @@ class LVQ(ModelWithLoss):
                 self.dist_mats = [create_tensor(np.dot(omega.T, omega)) for omega in model.omegas_]
                 self.classwise = False
 
-        super(LVQ, self).__init__()
+        super().__init__(**kwds)
 
     def _get_omega(self):
         if isinstance(self.model, sklearn_lvq.GlvqModel) or isinstance(self.model, sklearn_lvq.RslvqModel):
@@ -151,7 +151,7 @@ class LVQ(ModelWithLoss):
 
 
 class CQPHelper(ConvexQuadraticProgram):
-    def __init__(self, mymodel, x_orig, y_target, indices_other_prototypes, features_whitelist=None, regularization="l1"):
+    def __init__(self, mymodel, x_orig, y_target, indices_other_prototypes, features_whitelist=None, regularization="l1", **kwds):
         self.mymodel = mymodel
         self.features_whitelist = features_whitelist
         self.regularization = regularization
@@ -160,7 +160,7 @@ class CQPHelper(ConvexQuadraticProgram):
         self.other_prototypes = [self.mymodel.prototypes[i] for i in indices_other_prototypes]
         self.target_prototype = -1
 
-        super(CQPHelper, self).__init__()
+        super().__init__(**kwds)
 
     def _build_constraints(self, var_x, y):
         Omega = self.mymodel._get_omega()
@@ -186,11 +186,11 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model, dist="l2", cqphelper=CQPHelper):
+    def __init__(self, model, dist="l2", cqphelper=CQPHelper, **kwds):
         self.dist = dist    # TODO: Extract distance from model
         self.cqphelper = cqphelper
 
-        super(LvqCounterfactual, self).__init__(model)
+        super().__init__(model=model, **kwds)
     
     def rebuild_model(self, model):
         """Rebuilds a :class:`sklearn_lvq.GlvqModel`, :class:`sklearn_lvq.GmlvqModel`, :class:`sklearn_lvq.LgmlvqModel`, :class:`sklearn_lvq.RslvqModel`, :class:`sklearn_lvq.MrslvqModel` or :class:`sklearn_lvq.LmrslvqModel` model.

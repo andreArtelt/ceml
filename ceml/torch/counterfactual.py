@@ -29,7 +29,7 @@ class TorchCounterfactual(Counterfactual):
     TypeError
         If model is not an instance of :class:`torch.nn.Module` and :class:`ceml.model.model.ModelWithLoss`.
     """
-    def __init__(self, model, device=torch.device("cpu")):
+    def __init__(self, model, device=torch.device("cpu"), **kwds):
         if not isinstance(model, torch.nn.Module) or not isinstance(model, ModelWithLoss):
             raise TypeError(f"model has to be an instance of 'torch.nn.Module' and of 'ceml.model.ModelWithLoss' not {type(model)}")
         
@@ -40,7 +40,7 @@ class TorchCounterfactual(Counterfactual):
         for p in self.model.parameters():
             p.requires_grad = False
         
-        super(TorchCounterfactual, self).__init__()
+        super().__init__(**kwds)
     
     def wrap_input(self, features_whitelist, x, optimizer):
         return wrap_input(features_whitelist, x, self.model, optimizer, self.device)

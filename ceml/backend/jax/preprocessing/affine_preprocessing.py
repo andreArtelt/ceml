@@ -7,10 +7,11 @@ class AffinePreprocessing():
     """
     Wrapper for an affine mapping (preprocessing)
     """
-    def __init__(self, A, b):
+    def __init__(self, A, b, **kwds):
         self.A = A
         self.b = b
 
+        super().__init__(**kwds)
 
 def concatenate_affine_mappings(mappings):
     A = reduce(np.matmul, reversed([m.A for m in mappings]))

@@ -26,12 +26,12 @@ class IsolationForestCost(CostFunction):
         
         The default is None.
     """
-    def __init__(self, models, y_target, input_wrapper=None, epsilon=0):
+    def __init__(self, models, y_target, input_wrapper=None, epsilon=0, **kwds):
         self.models = models
         self.num_models = len(models)
         self.y_target = y_target
         
-        super(IsolationForestCost, self).__init__(input_wrapper)
+        super().__init__(input_to_output=input_wrapper, **kwds)
     
     def score_impl(self, x):
         """
@@ -53,13 +53,13 @@ class IsolationForest(ModelWithLoss):
     TypeError
         If `model` is not an instance of :class:`sklearn.ensemble.IsolationForest`
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         if not isinstance(model, sklearn.ensemble.IsolationForest):
             raise TypeError(f"model has to be an instance of 'sklearn.ensemble.IsolationForest' but not of {type(model)}")
 
         self.model = model
 
-        super(IsolationForest, self).__init__()
+        super().__init__(**kwds)
 
     def predict(self, x):
         """Predict the output of a given input.
@@ -101,8 +101,8 @@ class IsolationForestCounterfactual(SklearnCounterfactual):
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model):
-        super(IsolationForestCounterfactual, self).__init__(model)
+    def __init__(self, model, **kwds):
+        super().__init__(model=model, **kwds)
     
     """
     Build the (non-differentiable) cost function: Regularization + Loss

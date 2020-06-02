@@ -28,7 +28,7 @@ class LinearRegression(ModelWithLoss):
     dim : `int`
         Dimensionality of the input data.
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         if not isinstance(model, sklearn.linear_model._base.LinearModel):
             raise TypeError(f"model has to be an instance of a linear regression model like 'sklearn.linear_model.LinearRegression', 'sklearn.linear_model.Ridge', 'sklearn.linear_model.Lasso', 'sklearn.linear_model.HuberRegressor' or 'sklearn.linear_model.ElasticNet' but not of {type(model)}")
 
@@ -36,7 +36,7 @@ class LinearRegression(ModelWithLoss):
         self.b = model.intercept_
         self.dim = model.coef_.shape[0]
 
-        super(LinearRegression, self).__init__()
+        super().__init__(**kwds)
 
     def predict(self, x):
         """Predict the output of a given input.
@@ -87,8 +87,8 @@ class LinearRegressionCounterfactual(SklearnCounterfactual, MathematicalProgram,
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model):
-        super(LinearRegressionCounterfactual, self).__init__(model)
+    def __init__(self, model, **kwds):
+        super().__init__(model=model, **kwds)
     
     def rebuild_model(self, model):
         """Rebuild a :class:`sklearn.linear_model.base.LinearModel` model.

@@ -29,12 +29,12 @@ class SklearnCounterfactual(Counterfactual, ABC):
     ----
     The class :class:`SklearnCounterfactual` can not be instantiated because it contains an abstract method. 
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         self.model = model
         self.mymodel = self.rebuild_model(model)
         self.model_predict = self.model.predict
 
-        super(SklearnCounterfactual, self).__init__()
+        super().__init__(**kwds)
 
     def _model_predict(self, x):
         return self.model_predict(x)

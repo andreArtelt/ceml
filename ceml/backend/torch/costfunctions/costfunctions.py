@@ -8,8 +8,8 @@ class CostFunctionDifferentiableTorch(CostFunctionDifferentiable):
     """
     Base class of differentiable cost functions implemented in PyTorch.
     """
-    def __init__(self):
-        super(CostFunctionDifferentiableTorch, self).__init__()
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
     
     def grad(self):
         """
@@ -30,8 +30,8 @@ class DummyCost(CostFunctionDifferentiableTorch):
     """
     Dummy cost function - always returns zero.
     """
-    def __init__(self):
-        super(DummyCost, self).__init__()
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -44,10 +44,10 @@ class L1Cost(CostFunctionDifferentiableTorch):
     """
     L1 cost function.
     """
-    def __init__(self, x_orig):
+    def __init__(self, x_orig, **kwds):
         self.x_orig = x_orig
 
-        super(L1Cost, self).__init__()
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -60,10 +60,10 @@ class L2Cost(CostFunctionDifferentiableTorch):
     """
     L2 cost function.
     """
-    def __init__(self, x_orig):
+    def __init__(self, x_orig, **kwds):
         self.x_orig = x_orig
 
-        super(L2Cost, self).__init__()
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -76,11 +76,11 @@ class LMadCost(CostFunctionDifferentiableTorch):
     """
     Manhattan distance weighted feature-wise with the inverse median absolute deviation (MAD).
     """
-    def __init__(self, x_orig, mad):
+    def __init__(self, x_orig, mad, **kwds):
         self.x_orig = x_orig
         self.mad = mad
 
-        super(LMadCost, self).__init__()
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -93,11 +93,11 @@ class MinOfListCost(CostFunctionDifferentiableTorch):
     """
     Minimum distance to a list of data points.
     """
-    def __init__(self, dist, samples):
+    def __init__(self, dist, samples, **kwds):
         self.dist = dist
         self.samples = samples
 
-        super(MinOfListCost, self).__init__()
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -110,11 +110,11 @@ class NegLogLikelihoodCost(CostFunctionDifferentiableTorch):
     """
     Negative-log-likelihood cost function.
     """
-    def __init__(self, input_to_output, y_target):
+    def __init__(self, input_to_output, y_target, **kwds):
         self.y_target = y_target
         self.input_to_output = input_to_output
 
-        super(NegLogLikelihoodCost, self).__init__()
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -127,11 +127,11 @@ class SquaredError(CostFunctionDifferentiableTorch):
     """
     Squared error cost function.
     """
-    def __init__(self, input_to_output, y_target):
+    def __init__(self, input_to_output, y_target, **kwds):
         self.y_target = y_target
         self.input_to_output = input_to_output
 
-        super(SquaredError, self).__init__()
+        super().__init__(**kwds)
     
     def score_impl(self, x):
         """
@@ -144,7 +144,7 @@ class RegularizedCost(CostFunctionDifferentiableTorch):
     """
     Regularized cost function.
     """
-    def __init__(self, penalize_input, penalize_output, C=1.0):
+    def __init__(self, penalize_input, penalize_output, C=1.0, **kwds):
         if not isinstance(penalize_input, CostFunctionDifferentiable):
             raise TypeError("penalize_input has to be an instance of 'CostFunctionDifferentiable'")
         if not isinstance(penalize_output, CostFunctionDifferentiable):
@@ -154,7 +154,7 @@ class RegularizedCost(CostFunctionDifferentiableTorch):
         self.penalize_output = penalize_output
         self.C = C
         
-        super(RegularizedCost, self).__init__()
+        super().__init__(**kwds)
 
     def score_impl(self, x):
         """

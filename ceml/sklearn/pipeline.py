@@ -34,10 +34,10 @@ class PipelineModel(ModelWithLoss):
     models : `list(objects)`
         Ordered list of all `sklearn` models in the pipeline.
     """
-    def __init__(self, models):
+    def __init__(self, models, **kwds):
         self.models = models
 
-        super(PipelineModel, self).__init__()
+        super().__init__(**kwds)
     
     def predict(self, x):
         """Predicts the output of a given input.
@@ -93,10 +93,10 @@ class PipelineCounterfactual(SklearnCounterfactual):
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         self.last_model_sklearn_counterfactual = None
 
-        super(PipelineCounterfactual, self).__init__(model)
+        super().__init__(model=model, **kwds)
 
     def wrap_model(self, model, return_sklearn_counterfactual=False):
         if isinstance(model, sklearn.preprocessing._data.StandardScaler):

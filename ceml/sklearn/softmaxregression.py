@@ -6,7 +6,7 @@ from ..backend.jax.layer import create_tensor, affine, softmax, softmax_binary
 from ..backend.jax.costfunctions import NegLogLikelihoodCost
 from ..model import ModelWithLoss
 from .counterfactual import SklearnCounterfactual
-from ..optim import MathematicalProgram, ConvexQuadraticProgram
+from ..optim import MathematicalProgram, ConvexQuadraticProgram, PlausibleCounterfactualOfHyperplaneClassifier
 
 
 class SoftmaxRegression(ModelWithLoss):
@@ -35,7 +35,7 @@ class SoftmaxRegression(ModelWithLoss):
     TypeError
         If `model` is not an instance of :class:`sklearn.linear_model.LogisticRegression`
     """
-    def __init__(self, model):
+    def __init__(self, model, **kwds):
         if not isinstance(model, sklearn.linear_model.LogisticRegression):
             raise TypeError(f"model has to be an instance of 'sklearn.linear_model.LogisticRegression' not of {type(model)}")
 
@@ -45,7 +45,7 @@ class SoftmaxRegression(ModelWithLoss):
 
         self.is_multiclass = model.coef_.shape[0] > 1
 
-        super(SoftmaxRegression, self).__init__()
+        super().__init__(**kwds)
 
     def predict(self, x):
         """Predict the output of a given input.
@@ -94,13 +94,18 @@ class SoftmaxRegression(ModelWithLoss):
             return NegLogLikelihoodCost(pred, y_target)
 
 
-class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadraticProgram):
+class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadraticProgram, PlausibleCounterfactualOfHyperplaneClassifier):
     """Class for computing a counterfactual of a softmax regression model.
 
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
-    def __init__(self, model):
-        super(SoftmaxCounterfactual, self).__init__(model)
+    def __init__(self, model, **kwds):
+        if not isinstance(model, sklearn.linear_model.LogisticRegression):
+            raise TypeError(f"model has to be an instance of 'sklearn.linear_model.LogisticRegression' not of {type(model)}")
+        if model.multi_class != "multinomial":
+            raise ValueError(f"multi_class has to be 'multinomial' not {model.multi_class}")
+
+        super().__init__(model=model, w=model.coef_, b=model.intercept_, n_dims=model.coef_.shape[1], **kwds)
     
     def rebuild_model(self, model):
         """Rebuilds a :class:`sklearn.linear_model.LogisticRegression` model.
@@ -117,11 +122,6 @@ class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQu
         :class:`ceml.sklearn.softmaxregression.SoftmaxRegression`
             The wrapped softmax regression model.
         """
-        if not isinstance(model, sklearn.linear_model.LogisticRegression):
-            raise TypeError(f"model has to be an instance of 'sklearn.linear_model.LogisticRegression' not of {type(model)}")
-        if model.multi_class != "multinomial":
-            raise ValueError(f"multi_class has to be 'multinomial' not {model.multi_class}")
-
         return SoftmaxRegression(model)
     
     def _build_constraints(self, var_x, y):
@@ -167,7 +167,7 @@ class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQu
             return xcf, y_target, delta
 
 
-def softmaxregression_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="mp", return_as_dict=True, done=None):
+def softmaxregression_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="mp", return_as_dict=True, done=None, plausibility=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -221,6 +221,12 @@ def softmaxregression_generate_counterfactual(model, x, y_target, features_white
         The default is True.
     done : `callable`, optional
         Not used.
+    plausibility: `dict`, optional.
+        If set to a valid dictionary (see :func:`ceml.sklearn.plausibility.prepare_computation_of_plausible_counterfactuals`), a plausible counterfactual (as proposed in Artelt et al. 2020) is computed. Note that in this case, all other parameters are ignored.
+
+        If `plausibility` is None, the closest counterfactual is computed.
+
+        The default is None.
 
     Returns
     -------
@@ -239,4 +245,9 @@ def softmaxregression_generate_counterfactual(model, x, y_target, features_white
     if optimizer == "auto":
         optimizer = "mp"
 
-    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
+    if plausibility is None:
+        return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
+    else:
+        cf.setup_plausibility_params(plausibility["ellipsoids_r"], plausibility["gmm_weights"], plausibility["gmm_means"], plausibility["gmm_covariances"], plausibility["projection_matrix"], plausibility["projection_mean_sub"], plausibility["use_density_constraints"], plausibility["density_thresholds"])
+
+        return cf.compute_plausible_counterfactual(x, y_target)
