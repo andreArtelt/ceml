@@ -8,6 +8,13 @@ ceml.sklearn.counterfactual
    :members:
    :show-inheritance:
 
+ceml.sklearn.plausibility
+-------------------------
+
+.. automodule:: ceml.sklearn.plausibility
+   :members:
+   :show-inheritance:
+
 ceml.sklearn.decisiontree
 -------------------------
 

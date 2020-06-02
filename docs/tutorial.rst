@@ -11,5 +11,6 @@ In the subsequent paragraphs, we demonstrate how to use CEML with models from di
     :caption: Machine Learning frameworks
 
     tut_sklearn
+    tut_sklearn_plausibility
     tut_pytorch
     tut_tfkeras
