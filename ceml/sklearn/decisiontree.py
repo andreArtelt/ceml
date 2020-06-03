@@ -150,7 +150,7 @@ class DecisionTreeCounterfactual(SklearnCounterfactual, PlausibleCounterfactualO
     See parent class :class:`ceml.sklearn.counterfactual.SklearnCounterfactual`.
     """
     def __init__(self, model, **kwds):
-        super().__init__(model=model, tree_model=model, n_dims=None, **kwds)
+        super().__init__(model=model, tree_model=model, n_dims=model.n_features_, **kwds)
     
     def rebuild_model(self, model):
         """Rebuild a :class:`sklearn.linear_model.LogisticRegression` model.
