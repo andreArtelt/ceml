@@ -110,34 +110,32 @@ class NegLogLikelihoodCost(CostFunctionDifferentiableTorch):
     """
     Negative-log-likelihood cost function.
     """
-    def __init__(self, input_to_output, y_target, **kwds):
+    def __init__(self, y_target, **kwds):
         self.y_target = y_target
-        self.input_to_output = input_to_output
 
         super().__init__(**kwds)
     
-    def score_impl(self, x):
+    def score_impl(self, y):
         """
         Computes the loss - negative-log-likelihood.
         """
-        return negloglikelihood(self.input_to_output(x), self.y_target) 
+        return negloglikelihood(y, self.y_target) 
 
 
 class SquaredError(CostFunctionDifferentiableTorch):
     """
     Squared error cost function.
     """
-    def __init__(self, input_to_output, y_target, **kwds):
+    def __init__(self, y_target, **kwds):
         self.y_target = y_target
-        self.input_to_output = input_to_output
 
         super().__init__(**kwds)
     
-    def score_impl(self, x):
+    def score_impl(self, y):
         """
         Computes the loss - squared error.
         """
-        return l2(self.input_to_output(x), self.y_target)
+        return l2(y, self.y_target)
 
 
 class RegularizedCost(CostFunctionDifferentiableTorch):

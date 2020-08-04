@@ -176,7 +176,7 @@ class TorchCounterfactual(Counterfactual):
         """
         # Hide the input in a wrapper if we can use a subset of features only
         input_wrapper, x_orig, _, grad_mask = self.wrap_input(features_whitelist, x, optimizer)
-        
+
         # Check if the prediction of the given input is already consistent with y_target
         done = done = done if done is not None else y_target if callable(y_target) else lambda y: y == y_target
         self.warn_if_already_done(x, done)

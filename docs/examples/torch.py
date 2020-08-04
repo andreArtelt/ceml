@@ -30,7 +30,7 @@ class Model(torch.nn.Module, ModelWithLoss):
         return torch.argmax(self.forward(x), dim=dim)
     
     def get_loss(self, y_target, pred=None):
-        return NegLogLikelihoodCost(self.predict_proba, y_target)
+        return NegLogLikelihoodCost(input_to_output=self.predict_proba, y_target=y_target)
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ def test_softmaxregression():
             return torch.argmax(self.forward(x), dim=dim)
         
         def get_loss(self, y_target, pred=None):
-            return NegLogLikelihoodCost(self.predict_proba, y_target)
+            return NegLogLikelihoodCost(input_to_output=self.predict_proba, y_target=y_target)
 
     # Load data
     X, y = load_iris(True)
@@ -164,7 +164,7 @@ def test_softmaxregression():
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
     optimizer = torch.optim.SGD
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l2", C=0.0001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))).detach().numpy() == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])

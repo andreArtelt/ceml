@@ -30,7 +30,7 @@ def test_linearregression():
             return self.forward(x)
         
         def get_loss(self, y_target, pred=None):
-            return SquaredError(self.predict, y_target)
+            return SquaredError(input_to_output=self.predict, y_target=y_target)
 
     # Load data
     X, y = load_boston(True)
