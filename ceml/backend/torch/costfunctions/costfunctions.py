@@ -158,4 +158,4 @@ class RegularizedCost(CostFunctionDifferentiableTorch):
         """
         Computes the loss.
         """
-        return self.C * self.penalize_input(x) + self.penalize_output(x)
+        return self.C * self.penalize_input.score_impl(x) + self.penalize_output.score_impl(x)
