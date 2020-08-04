@@ -96,7 +96,7 @@ def test_plausible_counterfactual():
 
 def test_decisiontree_classifier():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -124,7 +124,7 @@ def test_decisiontree_classifier():
 
 def test_decisiontree_regressor():
     # Load data
-    X, y = load_boston(True)
+    X, y = load_boston(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 

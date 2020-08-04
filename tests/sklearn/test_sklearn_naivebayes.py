@@ -15,7 +15,7 @@ from ceml.sklearn import generate_counterfactual
 
 def test_gaussiannaivebayes():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -91,7 +91,7 @@ def test_gaussiannaivebayes():
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
     # Test binary case
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     idx = y != 2
     X, y = X[idx, :], y[idx]
 

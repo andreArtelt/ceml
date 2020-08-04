@@ -16,7 +16,7 @@ from ceml.sklearn import LVQ as LvqCf
 
 def test_glvq():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -90,7 +90,7 @@ def test_glvq():
 
 def test_gmlvq():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -160,7 +160,7 @@ def test_gmlvq():
 
 def test_lgmlvq():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -230,7 +230,7 @@ def test_lgmlvq():
 
 def test_lgmlvq_classwise():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
