@@ -38,10 +38,10 @@ def test_linearregression():
             return self.predict(x)
 
         def get_loss(self, y_target, pred=None):
-            return SquaredError(self.model.predict, y_target)
+            return SquaredError(input_to_output=self.model.predict, y_target=y_target)
 
     # Load data
-    X, y = load_boston(True)
+    X, y = load_boston(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1)
 

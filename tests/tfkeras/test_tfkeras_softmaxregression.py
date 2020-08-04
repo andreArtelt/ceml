@@ -69,10 +69,10 @@ def test_softmaxregression():
             return self.predict(x)
 
         def get_loss(self, y_target, pred=None):
-            return NegLogLikelihoodCost(self.model.predict_proba, y_target)
+            return NegLogLikelihoodCost(input_to_output=self.model.predict_proba, y_target=y_target)
 
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1)
 

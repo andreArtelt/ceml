@@ -81,31 +81,29 @@ class SquaredError(CostFunctionDifferentiableTf):
     """
     Squared error cost function.
     """
-    def __init__(self, input_to_output, y_target, **kwds):
+    def __init__(self, y_target, **kwds):
         self.y_target = y_target
-        self.input_to_output = input_to_output
 
         super().__init__(**kwds)
     
-    def score_impl(self, x):
+    def score_impl(self, y):
         """
         Computes the loss - squared error.
         """
-        return l2(self.input_to_output(x), self.y_target)
+        return l2(y, self.y_target)
 
 
 class NegLogLikelihoodCost(CostFunctionDifferentiableTf):
     """
     Negative-log-likelihood cost function.
     """
-    def __init__(self, input_to_output, y_target, **kwds):
+    def __init__(self, y_target, **kwds):
         self.y_target = y_target
-        self.input_to_output = input_to_output
         
         super().__init__(**kwds)
     
-    def score_impl(self, x):
-        return negloglikelihood(self.input_to_output(x), self.y_target) 
+    def score_impl(self, y):
+        return negloglikelihood(y, self.y_target) 
 
 
 class RegularizedCost(CostFunctionDifferentiableTf):
@@ -125,4 +123,4 @@ class RegularizedCost(CostFunctionDifferentiableTf):
         super().__init__(**kwds)
 
     def score_impl(self, x):
-        return self.C * self.penalize_input(x) + self.penalize_output(x)
+        return self.C * self.penalize_input.score_impl(x) + self.penalize_output.score_impl(x)

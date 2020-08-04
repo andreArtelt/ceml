@@ -35,7 +35,7 @@ class Model(ModelWithLoss):
         return self.predict(x)
 
     def get_loss(self, y_target, pred=None):
-        return NegLogLikelihoodCost(self.model.predict_proba, y_target)
+        return NegLogLikelihoodCost(input_to_output=self.model.predict_proba, y_target=y_target)
 
 
 if __name__ == "__main__":
