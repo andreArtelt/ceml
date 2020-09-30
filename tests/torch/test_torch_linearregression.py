@@ -33,7 +33,7 @@ def test_linearregression():
             return SquaredError(input_to_output=self.predict, y_target=y_target)
 
     # Load data
-    X, y = load_boston(True)
+    X, y = load_boston(return_X_y=True)
     X = X.astype(np.dtype(np.float32))
     y = y.astype(np.dtype(np.float32))
 
