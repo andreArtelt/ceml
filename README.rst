@@ -52,7 +52,7 @@ Install the toolbox itself:
 
 .. code:: bash
 
-    pip install
+    pip install .
 
 
 Quick example
