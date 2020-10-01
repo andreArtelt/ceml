@@ -62,7 +62,7 @@ class GaussianNB(ModelWithLoss):
         `jax.numpy.array`
             An array containing the class probabilities.
         """
-        feature_wise_normal = lambda z, mu, v: npx.sum([log_normal_distribution(z[i], mu[i], v[i]) for i in range(z.shape[0])])
+        feature_wise_normal = lambda z, mu, v: npx.sum(npx.array([log_normal_distribution(z[i], mu[i], v[i]) for i in range(z.shape[0])]))
 
         log_proba = create_tensor([npx.log(self.class_priors[i]) + feature_wise_normal(x, self.means[i], self.variances[i]) for i in range(len(self.class_priors))])
         proba = npx.exp(log_proba)

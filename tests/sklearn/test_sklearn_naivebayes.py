@@ -63,7 +63,7 @@ def test_gaussiannaivebayes():
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", optimizer="mp", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
-    assert all([True if i in features_whitelist else delta[i] <= 1e-5 for i in range(x_orig.shape[0])])
+    assert all([True if i in features_whitelist else delta[i] <= 1e-4 for i in range(x_orig.shape[0])])
 
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l2", optimizer="mp", return_as_dict=False)
     assert y_cf == 0

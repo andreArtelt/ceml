@@ -3,7 +3,7 @@ import jax.numpy as npx
 
 
 def min_of_list(x):
-    return npx.min(x)
+    return npx.min(npx.array(x))
 
 def loglikelihood(y_pred, y_target):
     return npx.log(y_pred)[y_target]
