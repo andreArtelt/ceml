@@ -52,4 +52,4 @@ if __name__ == "__main__":
 
     # Compute counterfactual by using our custom optimizer 'MyOptimizer'
     print("\nCompute counterfactual ....")
-    print(generate_counterfactual(model, x, y_target=0, optimizer=MyOptimizer(), features_whitelist=None, regularization="l1", C=1.0))
+    print(generate_counterfactual(model, x, y_target=0, optimizer=MyOptimizer(), features_whitelist=None, regularization="l1", C=0.5))
