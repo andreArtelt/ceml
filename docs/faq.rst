@@ -46,6 +46,9 @@ Can you implement a particular method/algorithm?
     
     Go to Github_ and create a new issue. I will take a look at it and let you know whether/when I will/can implement this.
 
+Where can I learn more about the computation of counterfactual explanations?
+    Please take a look at the section :ref:`theory_background`.
+
 
 .. _License: https://github.com/andreArtelt/ceml/LICENSE
 .. _Github: https://github.com/andreArtelt/ceml/
