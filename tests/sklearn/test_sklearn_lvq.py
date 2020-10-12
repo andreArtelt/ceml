@@ -95,7 +95,7 @@ def test_gmlvq():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
     # Create and fit model
-    model = GmlvqModel(prototypes_per_class=3, max_iter=200, random_state=4242, dim=2)
+    model = GmlvqModel(prototypes_per_class=3, max_iter=200, random_state=4242)
     model.fit(X_train, y_train)
 
     # Select data point for explaining its prediction
@@ -187,7 +187,7 @@ def test_lgmlvq():
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer="bfgs", return_as_dict=False)
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=2.0, optimizer="bfgs", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 
@@ -211,7 +211,7 @@ def test_lgmlvq():
     assert model.predict(np.array([x_cf])) == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=1.0, optimizer="bfgs", return_as_dict=False)
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, 0, features_whitelist=features_whitelist, regularization="l1", C=2.0, optimizer="bfgs", return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
