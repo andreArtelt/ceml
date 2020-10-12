@@ -162,7 +162,7 @@ def compute_counterfactuals_2(model, x, y):
 
 def test_pipeline_scaler_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -216,7 +216,7 @@ def test_pipeline_scaler_softmaxregression():
 
 def test_pipeline_robustscaler_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -237,7 +237,7 @@ def test_pipeline_robustscaler_softmaxregression():
 
 def test_pipeline_maxabsscaler_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -258,7 +258,7 @@ def test_pipeline_maxabsscaler_softmaxregression():
 
 def test_pipeline_minmaxscaler_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -296,7 +296,7 @@ def test_pipeline_minmaxscaler_softmaxregression():
 
 def test_pipeline_normalizer_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -317,7 +317,7 @@ def test_pipeline_normalizer_softmaxregression():
 
 def test_pipeline_poly_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -338,7 +338,7 @@ def test_pipeline_poly_softmaxregression():
 
 def test_pipeline_scaler_poly_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -360,7 +360,7 @@ def test_pipeline_scaler_poly_softmaxregression():
 
 def test_pipeline_pca_linearregression():
     # Load data
-    X, y = load_boston(True)
+    X, y = load_boston(return_X_y=True)
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
     

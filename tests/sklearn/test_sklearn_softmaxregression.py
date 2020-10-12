@@ -127,7 +127,7 @@ def test_plausible_counterfactual():
 
 def test_softmaxregression():
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     # Binary classification problem
     idx = y > 1 # Convert data into a binary problem
@@ -246,7 +246,7 @@ def test_softmaxregression():
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
 
     # Test binary case
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     idx = y != 2
     X, y = X[idx, :], y[idx]
 
