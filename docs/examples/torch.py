@@ -35,7 +35,7 @@ class Model(torch.nn.Module, ModelWithLoss):
 
 if __name__ == "__main__":
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
     X = X.astype(np.dtype(np.float32))
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1)

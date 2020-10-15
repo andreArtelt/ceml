@@ -42,7 +42,7 @@ if __name__ == "__main__":
     tf.random.set_seed(42)   # Fix random seed
 
     # Load data
-    X, y = load_iris(True)
+    X, y = load_iris(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=1)
 
