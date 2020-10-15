@@ -5,7 +5,7 @@ CEML
 Counterfactuals for Explaining Machine Learning models
 --------------------------------------------------------
 
-CEML is a Python toolbox for computing counterfactuals. Counterfactuals can be use to explain the predictions of machine learing models.
+CEML is a Python toolbox for computing counterfactuals. Counterfactuals can be used to explain the predictions of machine learing models.
 
 It supports many common machine learning frameworks:
 
@@ -70,7 +70,7 @@ Quick example
 
     if __name__ == "__main__":
         # Load data
-        X, y = load_iris(True)
+        X, y = load_iris(return_X_y=True)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
         # Whitelist of features - list of features we can change/use when computing a counterfactual 
