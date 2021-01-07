@@ -54,7 +54,7 @@ def test_linearregression():
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.01) 
 
-    num_epochs = 3000
+    num_epochs = 30000
     for epoch in range(num_epochs):
         optimizer.zero_grad()
         outputs = model(x)
@@ -77,8 +77,8 @@ def test_linearregression():
     y_target_done = lambda z: np.abs(z - y_target) < 6.
 
     optimizer = "bfgs"
-    optimizer_args = {"max_iter": 1000, "args": {"lr": 0.1}}
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=y_target, features_whitelist=features_whitelist, regularization="l2", C=10., optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False, done=y_target_done)
+    optimizer_args = {"max_iter": 1000, "args": {"lr": 0.01}}
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=y_target, features_whitelist=features_whitelist, regularization="l1", C=35., optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False, done=y_target_done)
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))))
 
@@ -88,15 +88,15 @@ def test_linearregression():
     assert y_target_done(model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))))
 
     optimizer = torch.optim.Adam
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=y_target, features_whitelist=features_whitelist, regularization="l2", C=10., optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False, done=y_target_done)
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=y_target, features_whitelist=features_whitelist, regularization="l2", C=5., optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False, done=y_target_done)
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))))
 
     features_whitelist = features_whitelist = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
     optimizer = "bfgs"
-    optimizer_args = {"max_iter": 1000, "args": {"lr": 0.1}}
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=y_target, features_whitelist=features_whitelist, regularization="l2", C=10., optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False, done=y_target_done)
+    optimizer_args = {"max_iter": 5000, "args": {"lr": 0.01}}
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=y_target, features_whitelist=features_whitelist, regularization="l1", C=33., optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False, done=y_target_done)
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(torch.from_numpy(np.array([x_cf], dtype=np.float32))))
     assert all([True if i in features_whitelist else delta[i] == 0. for i in range(x_orig.shape[0])])
