@@ -135,9 +135,11 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
         return [cp.trace(A @ var_X) + b @ var_x + c + self.epsilon <= 0]
 
     def _build_solve_dcqp(self, x_orig, y_target, regularization, features_whitelist):
+        x_orig_prime = self._apply_affine_preprocessing_to_const(x_orig)
+
         Q0 = np.eye(self.mymodel.dim)   # TODO: Can be ignored if regularization != l2
         Q1 = np.zeros((self.mymodel.dim, self.mymodel.dim))
-        q = -2. * x_orig
+        q = -2. * x_orig_prime
         c = 0.0
 
         A0_i = []
@@ -158,7 +160,7 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
         xcf = None
-        if self.mymodel.is_binary:
+        if self.mymodel.is_binary and not self.is_affine_preprocessing_set():
             xcf = self.build_solve_opt(x_orig, y_target)
         else:
             xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist)

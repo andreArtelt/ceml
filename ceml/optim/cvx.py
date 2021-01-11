@@ -16,7 +16,39 @@ class MathematicalProgram():
         raise NotImplementedError()
 
 
-class ConvexQuadraticProgram(ABC):
+class SupportAffinePreprocessing():
+    """Base class for a mathematical programs that support an affine preprocessing.
+    """
+    def __init__(self, **kwds):
+        self.A = None
+        self.b = None
+
+        super().__init__(**kwds)
+
+    def set_affine_preprocessing(self, A, b):
+        self.A = A
+        self.b = b
+
+    def get_affine_preprocessing(self):
+        return {"A": self.A, "b": self.b}
+
+    def is_affine_preprocessing_set(self):
+        return self.A is None or self.b is None
+
+    def _apply_affine_preprocessing_to_var(self, var_x):
+        if self.A is not None and self.b is not None:
+            return self.A @ var_x + self.b
+        else:
+            return var_x
+    
+    def _apply_affine_preprocessing_to_const(self, x):
+        if self.A is not None and self.b is not None:
+            return np.dot(self.A, x) + self.b
+        else:
+            return x
+
+
+class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
     """Base class for a convex quadratic program - for computing counterfactuals.
 
     Attributes
@@ -26,20 +58,8 @@ class ConvexQuadraticProgram(ABC):
     """
     def __init__(self, **kwds):
         self.epsilon = 1e-2
-        self.A = None
-        self.b = None
 
         super().__init__(**kwds)
-    
-    def set_affine_preprocessing(self, A, b):
-        self.A = A
-        self.b = b
-
-    def _apply_affine_preprocessing(self, var_x):
-        if self.A is not None and self.b is not None:
-            return self.A @ var_x + self.b
-        else:
-            return var_x
 
     @abstractmethod
     def _build_constraints(self, var_x, y):
@@ -244,7 +264,7 @@ class SDP(ABC):
         return x.value.reshape(dim)
 
 
-class DCQP():
+class DCQP(SupportAffinePreprocessing):
     """Class for a difference-of-convex-quadratic program (DCQP) - for computing counterfactuals.
 
     .. math:: \\underset{\\vec{x} \\in \\mathbb{R}^d}{\\min} \\vec{x}^\\top Q_0 \\vec{x} + \\vec{q}^\\top \\vec{x} + c - \\vec{x}^\\top Q_1 \\vec{x} \\quad \\text{s.t. } \\vec{x}^\\top A0_i \\vec{x} + \\vec{x}^\\top \\vec{b_i} + r_i - \\vec{x}^\\top A1_i \\vec{x} \\leq 0 \\; \\forall\\,i
@@ -326,10 +346,11 @@ class DCQP():
 
             The default is 1.5
         """
+        self.pccp.set_affine_preprocessing(**self.get_affine_preprocessing())
         return self.pccp.compute_counterfactual(self.x_orig, self.y_target, x0, tao=1.2, tao_max=100, mu=1.5)
 
 
-class PenaltyConvexConcaveProcedure():
+class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
     """Implementation of the penalty convex-concave procedure for approximately solving a DCQP.
     """
     def __init__(self, model, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None, **kwds):      
@@ -362,8 +383,10 @@ class PenaltyConvexConcaveProcedure():
             self.dim = x_orig.shape[0]
 
             # Variables
-            x = cp.Variable(self.dim)
+            var_x = cp.Variable(self.dim)
             s = cp.Variable(len(self.A0s))
+
+            var_x_prime = self._apply_affine_preprocessing_to_var(var_x)
 
             # Constants
             s_z = np.zeros(len(self.A0s))
@@ -373,9 +396,9 @@ class PenaltyConvexConcaveProcedure():
             # Build constraints
             constraints = []
             for i in range(len(self.A0s)):
-                A = cp.quad_form(x, self.A0s[i])
-                q = x.T @ self.bs[i]
-                c = self.rs[i] + np.dot(xcf, np.dot(xcf, self.A1s[i])) - 2. * x.T @ np.dot(xcf, self.A1s[i]) - s[i]
+                A = cp.quad_form(var_x_prime, self.A0s[i])
+                q = var_x_prime.T @ self.bs[i]
+                c = self.rs[i] + np.dot(xcf, np.dot(xcf, self.A1s[i])) - 2. * var_x.T @ np.dot(xcf, self.A1s[i]) - s[i]
 
                 constraints.append(A + q + c + self.epsilon <= 0)
             
@@ -395,14 +418,14 @@ class PenaltyConvexConcaveProcedure():
                     A = np.array(A)
                     a = np.array(a)
 
-                    constraints += [A @ x == a]
+                    constraints += [A @ var_x == a]
 
             # Build the final program
             f = None
             if self.mad is not None:    # TODO: Right now, mad != 1 is not supported.
-                f = cp.Minimize(cp.norm(x - x_orig, 1) + s.T @ (tao*s_c))
+                f = cp.Minimize(cp.norm(var_x - x_orig, 1) + s.T @ (tao*s_c))
             else:
-                f = cp.Minimize(cp.quad_form(x, self.Q0) + self.q.T @ x + self.c + np.dot(xcf, np.dot(xcf, self.Q1)) - 2. * x.T @ np.dot(xcf, self.Q1) + s.T @ (tao*s_c))
+                f = cp.Minimize(cp.quad_form(var_x, self.Q0) + self.q.T @ var_x + self.c + np.dot(xcf, np.dot(xcf, self.Q1)) - 2. * var_x.T @ np.dot(xcf, self.Q1) + s.T @ (tao*s_c))
             constraints += [s >= s_z]
         
             prob = cp.Problem(f, constraints)
@@ -410,10 +433,10 @@ class PenaltyConvexConcaveProcedure():
             # Solve it!
             self._solve(prob)
 
-            if x.value is None:
+            if var_x.value is None:
                 raise Exception("No solution found!")
             else:
-                return x.value
+                return var_x.value
         except Exception as ex:
             logging.debug(str(ex))
 

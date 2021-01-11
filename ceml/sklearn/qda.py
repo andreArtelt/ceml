@@ -133,16 +133,18 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
         i = int(y)
         j = 0 if y == 1 else 1
 
-        A = .5 * ( self.mymodel.sigma_inv[i] - self.mymodel.sigma_inv[j])
+        A = .5 * (self.mymodel.sigma_inv[i] - self.mymodel.sigma_inv[j])
         b = np.dot(self.mymodel.sigma_inv[j], self.mymodel.means[j]) - np.dot(self.mymodel.sigma_inv[i], self.mymodel.means[i])
         c = np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + 0.5 * np.log(np.linalg.det(self.mymodel.sigma_inv[j]) / np.linalg.det(self.mymodel.sigma_inv[i])) + 0.5 * (self.mymodel.means[i].T.dot(self.mymodel.sigma_inv[i]).dot(self.mymodel.means[i]) - self.mymodel.means[j].T.dot(self.mymodel.sigma_inv[j]).dot(self.mymodel.means[j]))
 
         return [cp.trace(A @ var_X) + var_x.T @ b + c + self.epsilon <= 0]
 
     def _build_solve_dcqp(self, x_orig, y_target, regularization, features_whitelist):
+        x_orig_prime = self._apply_affine_preprocessing_to_const(x_orig)
+        
         Q0 = np.eye(self.mymodel.dim)   # TODO: Can be ignored if regularization != l2
         Q1 = np.zeros((self.mymodel.dim, self.mymodel.dim))
-        q = -2. * x_orig
+        q = -2. * x_orig_prime
         c = 0.0
 
         A0_i = []
@@ -163,7 +165,7 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
         xcf = None
-        if self.mymodel.is_binary:
+        if self.mymodel.is_binary and not self.is_affine_preprocessing_set():
             xcf = self.build_solve_opt(x_orig, y_target, features_whitelist)
         else:
             xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist)

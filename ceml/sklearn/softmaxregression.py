@@ -128,7 +128,7 @@ class SoftmaxCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQu
         constraints = []
         
         # If set, a apply an affine preprocessing to x
-        var_x_ = self._apply_affine_preprocessing(var_x)
+        var_x_ = self._apply_affine_preprocessing_to_var(var_x)
 
         # Build constraints
         if self.mymodel.is_multiclass is True:  # Multiclass classifier

@@ -4,17 +4,18 @@ import sklearn.pipeline
 import sklearn_lvq
 
 from .softmaxregression import SoftmaxRegression, SoftmaxCounterfactual
-from .naivebayes import GaussianNB
+from .naivebayes import GaussianNB, GaussianNbCounterfactual
 from .linearregression import LinearRegression, LinearRegressionCounterfactual
 from .knn import KNN
-from .lvq import LVQ
+from .lvq import LVQ, LvqCounterfactual
 from .lda import Lda, LdaCounterfactual
-from .qda import Qda
+from .qda import Qda, QdaCounterfactual
 from ..model import ModelWithLoss
 from ..backend.jax.preprocessing import StandardScaler, PCA, PolynomialFeatures, Normalizer, MinMaxScaler, AffinePreprocessing, concatenate_affine_mappings
 from ..backend.jax.costfunctions import CostFunctionDifferentiable, RegularizedCost
 from ..costfunctions import RegularizedCost as RegularizedCostNonDifferentiable
 from ..optim.cvx import ConvexQuadraticProgram
+from ..optim.cvx import SupportAffinePreprocessing
 from .utils import build_regularization_loss
 from .counterfactual import SklearnCounterfactual
 
@@ -142,14 +143,14 @@ class PipelineCounterfactual(SklearnCounterfactual):
             if return_sklearn_counterfactual is False:
                 return GaussianNB(model)
             else:
-                raise NotImplementedError()
+                return GaussianNbCounterfactual(model)
         elif isinstance(model, sklearn.discriminant_analysis.LinearDiscriminantAnalysis):
             return Lda(model) if return_sklearn_counterfactual is False else LdaCounterfactual(model)
         elif isinstance(model, sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis):
             if return_sklearn_counterfactual is False:
                 return Qda(model)
             else:
-                raise NotImplementedError()
+                return QdaCounterfactual(model)
         elif isinstance(model, sklearn.tree.DecisionTreeClassifier) or isinstance(model, sklearn.tree.DecisionTreeRegressor):
             raise NotImplementedError()
         elif isinstance(model, sklearn.ensemble.RandomForestClassifier) or isinstance(model, sklearn.ensemble.RandomForestRegressor):
@@ -163,7 +164,7 @@ class PipelineCounterfactual(SklearnCounterfactual):
             if return_sklearn_counterfactual is False:
                 return LVQ(model)
             else:
-                raise NotImplementedError()
+                return LvqCounterfactual(model)
         else:
             raise ValueError(f"{type(model)} is not supported")
 
@@ -323,7 +324,7 @@ class PipelineCounterfactual(SklearnCounterfactual):
         """
         if optimizer == "auto":
             # Check if we can use a mathematical program
-            if isinstance(self.last_model_sklearn_counterfactual, ConvexQuadraticProgram): # TODO: Support SDPs and DCPs
+            if isinstance(self.last_model_sklearn_counterfactual, SupportAffinePreprocessing):
                 if all([isinstance(m, AffinePreprocessing) for m in self.mymodel.models[:-1]]):
                     optimizer = "mp"
             else:   # Use Downhill-Simplex method otherwise
@@ -334,8 +335,8 @@ class PipelineCounterfactual(SklearnCounterfactual):
             preprocessings = self.mymodel.models[:-1]
 
             # Check types
-            if not isinstance(model, ConvexQuadraticProgram):
-                raise TypeError(f"The last model in the pipeline must be an instance of 'ceml.optim.ConvexQuadraticProgram' but not of {type(model)}")
+            if not isinstance(model, SupportAffinePreprocessing):
+                raise TypeError(f"The last model in the pipeline must be an instance of 'ceml.optim.cvx.SupportAffinePreprocessing' but not of {type(model)}")
             if not all([isinstance(m, AffinePreprocessing) for m in preprocessings]):
                 raise TypeError("All models (except the last one) in the pipeline must be an instance of an affine mapping('ceml.backend.jax.AffinePreprocessing')")
 

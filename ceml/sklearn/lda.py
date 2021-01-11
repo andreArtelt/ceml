@@ -130,7 +130,7 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
         constraints = []
 
         # If set, a apply an affine preprocessing to x
-        var_x_ = self._apply_affine_preprocessing(var_x)
+        var_x_ = self._apply_affine_preprocessing_to_var(var_x)
 
         # Build constraints
         i = y

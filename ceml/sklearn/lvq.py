@@ -163,6 +163,8 @@ class CQPHelper(ConvexQuadraticProgram):
         super().__init__(**kwds)
 
     def _build_constraints(self, var_x, y):
+        var_x_prime = self._apply_affine_preprocessing_to_var(var_x)
+
         Omega = self.mymodel._get_omega()
         p_i = self.mymodel.prototypes[self.target_prototype]
 
@@ -171,7 +173,7 @@ class CQPHelper(ConvexQuadraticProgram):
             p_j = self.other_prototypes[k]
             qj = np.dot(Omega, p_j - p_i)
             bj = -.5 * (np.dot(p_i, np.dot(Omega, p_i)) - np.dot(p_j, np.dot(Omega, p_j)))
-            results.append(qj.T @ var_x + bj + self.epsilon <= 0)
+            results.append(qj.T @ var_x_prime + bj + self.epsilon <= 0)
 
         return results
 
@@ -231,6 +233,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
 
         # Compute a counterfactual for each prototype
         solver = CQPHelper(mymodel=self.mymodel, x_orig=x_orig, y_target=y_target, indices_other_prototypes=other_prototypes, features_whitelist=features_whitelist, regularization=regularization)
+        solver.set_affine_preprocessing(**self.get_affine_preprocessing())
         for i in range(len(target_prototypes)):
             try:
                 xcf_ = solver.solve(target_prototype=i, features_whitelist=features_whitelist)
@@ -251,6 +254,8 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         return xcf
 
     def _build_solve_dcqp(self, x_orig, y_target, target_prototype_id, other_prototypes, features_whitelist, regularization):
+        x_orig_prime = self._apply_affine_preprocessing_to_const(x_orig)
+        
         p_i = self.mymodel.prototypes[target_prototype_id]
         o_i = self.mymodel.dist_mats[target_prototype_id] if not self.mymodel.classwise else self.mymodel.omegas[y_target]
         ri = .5 * np.dot(p_i, np.dot(o_i, p_i))
@@ -263,7 +268,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         if regularization == "l2":
             Q0 = np.eye(self.mymodel.dim)
             Q1 = np.zeros((self.mymodel.dim, self.mymodel.dim))
-            q = -x_orig
+            q = -x_orig_prime
             c = 0.0
 
         A0_i = []

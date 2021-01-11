@@ -114,7 +114,7 @@ class LinearRegressionCounterfactual(SklearnCounterfactual, MathematicalProgram,
         constraints = []
 
         # If set, a apply an affine preprocessing to x
-        var_x_ = self._apply_affine_preprocessing(var_x)
+        var_x_ = self._apply_affine_preprocessing_to_var(var_x)
 
         # Build box constraints
         constraints.append(self.mymodel.w @ var_x_ + self.mymodel.b - y <= self.epsilon)
