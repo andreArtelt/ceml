@@ -5,6 +5,37 @@ import numpy as np
 import cvxpy as cp
 
 
+def cvx_desc_to_solver(solver_desc):
+    if solver_desc == "SCS":
+        return cp.SCS
+    elif solver_desc == "MOSEK":
+        return cp.MOSEK
+    elif solver_desc == "CVXOPT":
+        return cp.CVXOPT
+    elif solver_desc == "OSQP":
+        return cp.OSQP
+    elif solver_desc == "ECOS":
+        return cp.ECOS
+    elif solver_desc == "CPLEX":
+        return cp.CPLEX
+    elif solver_desc == "CBC":
+        return cp.CBC
+    elif solver_desc == "NAG":
+        return cp.NAG
+    elif solver_desc == "GLPK":
+        return cp.GLPK
+    elif solver_desc == "GLPK_MI":
+        return cp.GLPK_MI
+    elif solver_desc == "GUROBI":
+        return cp.GUROBI
+    elif solver_desc == "SCIP":
+        return cp.SCIP
+    elif solver_desc == "XPRESS":
+        return cp.XPRESS
+    else:
+        raise ValueError(f"Solver '{solver_desc}' is not supported or unkown.")
+
+
 class MathematicalProgram():
     """Base class for a mathematical program.
     """
@@ -58,6 +89,7 @@ class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
     """
     def __init__(self, **kwds):
         self.epsilon = 1e-2
+        self.solver = cp.SCS
 
         super().__init__(**kwds)
 
@@ -80,9 +112,9 @@ class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
         raise NotImplementedError()
 
     def _solve(self, prob):
-        prob.solve(solver=cp.SCS, verbose=False)
+        prob.solve(solver=self.solver, verbose=False)
 
-    def build_solve_opt(self, x_orig, y, features_whitelist=None, mad=None):
+    def build_solve_opt(self, x_orig, y, features_whitelist=None, mad=None, optimizer_args=None):
         """Builds and solves the convex quadratic optimization problem.
         
         Parameters
@@ -103,6 +135,10 @@ class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
             If `mad` is None, the Euclidean distance is used.
 
             The default is None.
+        optimizer_args : `dict`, optional
+            Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+            The default is None.
         
         Returns
         -------
@@ -111,6 +147,12 @@ class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
 
             If no solution exists, `None` is returned.
         """
+        if optimizer_args is not None:
+            if "epsilon" in optimizer_args:
+                self.epsilon = optimizer_args["epsilon"]
+            if "solver" in optimizer_args:
+                self.solver = cvx_desc_to_solver(optimizer_args["solver"])
+
         dim = x_orig.shape[0]
         
         # Variables
@@ -175,6 +217,7 @@ class SDP(ABC):
     """
     def __init__(self, **kwds):
         self.epsilon = 1e-2
+        self.solver = cp.SCS
 
         super().__init__(**kwds)
     
@@ -199,9 +242,9 @@ class SDP(ABC):
         raise NotImplementedError()
     
     def _solve(self, prob):
-        prob.solve(solver=cp.SCS, verbose=False)
+        prob.solve(solver=self.solver, verbose=False)
 
-    def build_solve_opt(self, x_orig, y, features_whitelist=None):
+    def build_solve_opt(self, x_orig, y, features_whitelist=None, optimizer_args=None):
         """Builds and solves the SDP.
         
         Parameters
@@ -216,6 +259,10 @@ class SDP(ABC):
             If `features_whitelist` is None, all features can be used.
 
             The default is None.
+        optimizer_args : `dict`, optional
+            Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+            The default is None.
 
         Returns
         -------
@@ -224,6 +271,12 @@ class SDP(ABC):
 
             If no solution exists, `None` is returned.
         """
+        if optimizer_args is not None:
+            if "epsilon" in optimizer_args:
+                self.epsilon = optimizer_args["epsilon"]
+            if "solver" in optimizer_args:
+                self.solver = cvx_desc_to_solver(optimizer_args["solver"])
+
         dim = x_orig.shape[0]
 
         # Variables
@@ -278,11 +331,10 @@ class DCQP(SupportAffinePreprocessing):
     """
     def __init__(self, **kwds):
         self.pccp = None
-        self.epsilon = 1e-2
 
         super().__init__(**kwds)
 
-    def build_program(self, model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None):
+    def build_program(self, model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None, optimizer_args=None):
         """Builds the DCQP.
 
         Parameters
@@ -321,39 +373,31 @@ class DCQP(SupportAffinePreprocessing):
             If `mad` is None, the Euclidean distance is used.
 
             The default is None.
+        optimizer_args : `dict`, optional
+            Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+            The default is None.
         """
         self.x_orig = x_orig
         self.y_target = y_target
-        self.pccp = PenaltyConvexConcaveProcedure(model, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist, mad)
+        self.pccp = PenaltyConvexConcaveProcedure(model, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist, mad, optimizer_args)
 
-    def solve(self, x0, tao=1.2, tao_max=100, mu=1.5):
+    def solve(self, x0):
         """Approximately solves the DCQP by using the penalty convex-concave procedure.
 
         Parameters
         ----------
         x0 : `numpy.ndarray`
             The initial data point for the penalty convex-concave procedure - this could be anything, however a "good" initial solution might lead to a better result.
-        tao : `float`, optional
-            Hyperparameter - see paper for details.
-
-            The default is 1.2
-        tao_max : `float`, optional
-            Hyperparameter - see paper for details.
-
-            The default is 100
-        mu : `float`, optional
-            Hyperparameter - see paper for details.
-
-            The default is 1.5
         """
         self.pccp.set_affine_preprocessing(**self.get_affine_preprocessing())
-        return self.pccp.compute_counterfactual(self.x_orig, self.y_target, x0, tao=1.2, tao_max=100, mu=1.5)
+        return self.pccp.compute_counterfactual(self.x_orig, self.y_target, x0)
 
 
 class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
     """Implementation of the penalty convex-concave procedure for approximately solving a DCQP.
     """
-    def __init__(self, model, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None, **kwds):      
+    def __init__(self, model, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=None, mad=None, optimizer_args=None, **kwds):      
         self.model = model
         self.mad = mad
         self.features_whitelist = features_whitelist
@@ -369,6 +413,23 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
         self.dim = None
 
         self.epsilon = 1e-2
+        self.tao = 1.2
+        self.tao_max = 100
+        self.mu = 1.5
+
+        self.solver = cp.SCS
+
+        if optimizer_args is not None:
+            if "epsilon" in optimizer_args:
+                self.epsilon = optimizer_args["epsilon"]
+            if "tao" in optimizer_args:
+                self.tao = optimizer_args["tao"]
+            if "tao_max" in optimizer_args:
+                self.tao_max = optimizer_args["tao_max"]
+            if "mu" in optimizer_args:
+                self.mu = optimizer_args["mu"]
+            if "solver" in optimizer_args:
+                self.solver = cvx_desc_to_solver(optimizer_args["solver"])
         
         if not(len(self.A0s) == len(self.A1s) and len(self.A0s) == len(self.bs) and len(self.rs) == len(self.bs)):
             raise ValueError("Inconsistent number of constraint parameters")
@@ -376,7 +437,7 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
         super().__init__(**kwds)
 
     def _solve(self, prob):
-        prob.solve(solver=cp.SCS, verbose=False)
+        prob.solve(solver=self.solver, verbose=False)
 
     def solve_aux(self, xcf, tao, x_orig):
         try:
@@ -442,7 +503,7 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
 
             return x_orig
 
-    def compute_counterfactual(self, x_orig, y_target, x0, tao, tao_max, mu):
+    def compute_counterfactual(self, x_orig, y_target, x0):
         ####################################
         # Penalty convex-concave procedure #
         ####################################
@@ -451,10 +512,10 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
         xcf = x0
 
         # Hyperparameters
-        cur_tao = tao
+        cur_tao = self.tao
 
         # Solve a bunch of CCPs
-        while cur_tao < tao_max:
+        while cur_tao < self.tao_max:
             xcf_ = self.solve_aux(xcf, cur_tao, x_orig)
             xcf = xcf_
 
@@ -462,7 +523,7 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
                 break
 
             # Increase penalty parameter
-            cur_tao *= mu
+            cur_tao *= self.mu
         
         return xcf
 
@@ -472,14 +533,21 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
 #################################################
 
 class HighDensityEllipsoids:
-    def __init__(self, X, X_densities, cluster_probs, means, covariances, density_threshold=None, **kwds):
+    def __init__(self, X, X_densities, cluster_probs, means, covariances, density_threshold=None, optimizer_args=None, **kwds):
         self.X = X
         self.X_densities = X_densities
         self.density_threshold = density_threshold if density_threshold is not None else float("-inf")
         self.cluster_probs = cluster_probs
         self.means = means
         self.covariances = covariances
+
         self.epsilon = 1e-5
+        self.solver = cp.SCS
+        if optimizer_args is not None:
+            if "epsilon" in optimizer_args:
+                self.epsilon = optimizer_args["epsilon"]
+            if "solver" in optimizer_args:
+                self.solver = cvx_desc_to_solver(optimizer_args["solver"])
 
         super().__init__(**kwds)
 
@@ -487,7 +555,7 @@ class HighDensityEllipsoids:
         return self.build_solve_opt()
     
     def _solve(self, prob):
-        prob.solve(solver=cp.SCS, verbose=False)
+        prob.solve(solver=self.solver, verbose=False)
 
     def build_solve_opt(self):
         n_ellipsoids = self.cluster_probs.shape[1]
@@ -536,6 +604,7 @@ class PlausibleCounterfactualOfHyperplaneClassifier():
 
         self.min_density = None
         self.epsilon = 1e-2
+        self.solver = cp.SCS
         self.gmm_cluster_index = 0  # For internal use only!
 
         super().__init__(**kwds)
@@ -593,7 +662,7 @@ class PlausibleCounterfactualOfHyperplaneClassifier():
         return xcf
     
     def _solve_plausibility_opt(self, prob):
-        prob.solve(solver=cp.SCS, verbose=False)
+        prob.solve(solver=self.solver, verbose=False)
 
     def build_solve_plausibility_opt(self, x_orig, y, mad=None):
         dim = x_orig.shape[0]

@@ -151,10 +151,11 @@ class LVQ(ModelWithLoss):
 
 
 class CQPHelper(ConvexQuadraticProgram):
-    def __init__(self, mymodel, x_orig, y_target, indices_other_prototypes, features_whitelist=None, regularization="l1", **kwds):
+    def __init__(self, mymodel, x_orig, y_target, indices_other_prototypes, features_whitelist=None, regularization="l1", optimizer_args=None, **kwds):
         self.mymodel = mymodel
         self.features_whitelist = features_whitelist
         self.regularization = regularization
+        self.optimizer_args = optimizer_args
         self.x_orig = x_orig
         self.y_target = y_target
         self.other_prototypes = [self.mymodel.prototypes[i] for i in indices_other_prototypes]
@@ -180,7 +181,7 @@ class CQPHelper(ConvexQuadraticProgram):
     def solve(self, target_prototype, features_whitelist=None):
         self.target_prototype = target_prototype
         
-        return self.build_solve_opt(self.x_orig, self.y_target, features_whitelist, mad=None if self.regularization != "l1" else np.ones(self.mymodel.dim))
+        return self.build_solve_opt(self.x_orig, self.y_target, features_whitelist, mad=None if self.regularization != "l1" else np.ones(self.mymodel.dim), optimizer_args=self.optimizer_args)
 
 
 class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
@@ -214,7 +215,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
     
         return LVQ(model, self.dist)
 
-    def _compute_counterfactual_via_convex_quadratic_programming(self, x_orig, y_target, features_whitelist, regularization):
+    def _compute_counterfactual_via_convex_quadratic_programming(self, x_orig, y_target, features_whitelist, regularization, optimizer_args):
         xcf = None
         xcf_dist = float("inf")
 
@@ -232,7 +233,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
                 other_prototypes.append(i)
 
         # Compute a counterfactual for each prototype
-        solver = CQPHelper(mymodel=self.mymodel, x_orig=x_orig, y_target=y_target, indices_other_prototypes=other_prototypes, features_whitelist=features_whitelist, regularization=regularization)
+        solver = CQPHelper(mymodel=self.mymodel, x_orig=x_orig, y_target=y_target, indices_other_prototypes=other_prototypes, features_whitelist=features_whitelist, regularization=regularization, optimizer_args=optimizer_args)
         solver.set_affine_preprocessing(**self.get_affine_preprocessing())
         for i in range(len(target_prototypes)):
             try:
@@ -291,7 +292,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
 
         return DCQP.solve(self, x0=p_i, tao=1.2, tao_max=100, mu=1.5)
 
-    def _compute_counterfactual_via_dcqp(self, x_orig, y_target, features_whitelist, regularization):
+    def _compute_counterfactual_via_dcqp(self, x_orig, y_target, features_whitelist, regularization, optimizer_args):
         xcf = None
         xcf_dist = float("inf")
 
@@ -328,12 +329,12 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
 
         return xcf
 
-    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
+    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict, optimizer_args):
         xcf = None
         if isinstance(self.model, sklearn_lvq.LgmlvqModel) or isinstance(self.model, sklearn_lvq.LmrslvqModel):
-            xcf = self._compute_counterfactual_via_dcqp(x_orig, y_target, features_whitelist, regularization)
+            xcf = self._compute_counterfactual_via_dcqp(x_orig, y_target, features_whitelist, regularization, optimizer_args)
         else:
-            xcf = self._compute_counterfactual_via_convex_quadratic_programming(x_orig, y_target, features_whitelist, regularization)
+            xcf = self._compute_counterfactual_via_convex_quadratic_programming(x_orig, y_target, features_whitelist, regularization, optimizer_args)
         delta = x_orig - xcf
 
         if self._model_predict([xcf]) != y_target:
@@ -345,7 +346,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
             return xcf, y_target, delta
 
 
-def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l2", regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
+def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dist="l2", regularization="l1", C=1.0, optimizer="auto", optimizer_args=None, return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -408,6 +409,10 @@ def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dis
         Learning vector quantization supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a convex quadratic program (G(M)LVQ) or a DCQP (otherwise) for computing the counterfactual.
         Note that in this case the hyperparameter `C` is ignored.
         Because the DCQP is a non-convex problem, we are not guaranteed to find the best solution (it might even happen that we do not find a solution at all) - we use the penalty convex-concave procedure for approximately solving the DCQP.
+    optimizer_args : `dict`, optional
+        Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+        The default is None.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.
@@ -436,4 +441,4 @@ def lvq_generate_counterfactual(model, x, y_target, features_whitelist=None, dis
         else:
             optimizer = "nelder-mead"
 
-    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict)    
+    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, optimizer_args, return_as_dict)    

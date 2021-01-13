@@ -76,7 +76,7 @@ def is_optimizer_grad_based(optim):
         raise TypeError(f"optim has to be either a string or an instance of 'ceml.optim.optimizer.Optimizer' but not of {type(optim)}")
 
 
-def prepare_optim(optim, f, x0, f_grad=None, tol=None, max_iter=None):
+def prepare_optim(optim, f, x0, f_grad=None, optimizer_args=None):
     """
     Creates and initializes an optimization algorithm (instance of :class:`ceml.optim.optimizer.Optimizer`) specified by a description of the algorithm.
 
@@ -101,19 +101,10 @@ def prepare_optim(optim, f, x0, f_grad=None, tol=None, max_iter=None):
         If `f_grad` is None, no gradient is used. Note that some optimization algorithms require a gradient!
 
         The default is None.
-    tol : `float`, optional
-        Tolerance for termination.
-
-        `tol=None` is equivalent to `tol=0`.
+    optimizer_args : `dict`, optional
+        Dictionary for overriding the default hyperparameters of the optimization algorithm.
 
         The default is None.
-    max_iter : `int`, optional
-        Maximum number of iterations.
-
-        If `max_iter` is None, the default value of the particular optimization algorithm is used.
-
-        Default is None.
-    
     Returns
     -------
     `callable`
@@ -128,6 +119,14 @@ def prepare_optim(optim, f, x0, f_grad=None, tol=None, max_iter=None):
     """
     if is_optimizer_grad_based(optim) and f_grad is None:
         raise ValueError("You have to specify the gradient of the cost function if you want to use a gradient-based optimization algorithm.")
+
+    tol = None
+    max_iter = None
+    if optimizer_args is not None:
+        if "tol" in optimizer_args:
+            tol = optimizer_args["tol"]
+        if "max_iter" in optimizer_args:
+            max_iter = optimizer_args["max_iter"]
 
     if isinstance(optim, str):
         if optim == "nelder-mead":

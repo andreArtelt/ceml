@@ -148,7 +148,7 @@ class RandomForestCounterfactual(SklearnCounterfactual):
         
         return result
 
-    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", optimizer_args=None, return_as_dict=True, done=None):
         """Computes a counterfactual of a given input `x`.
 
         Parameters
@@ -192,6 +192,10 @@ class RandomForestCounterfactual(SklearnCounterfactual):
             Note
             ----
             The cost function of a random forest model is not differentiable - we can not use a gradient-based optimization algorithm.
+        optimizer_args : `dict`, optional
+            Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+            The default is None.
         return_as_dict : `boolean`, optional
             If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
             If False, the results are returned as a triple.
@@ -239,7 +243,7 @@ class RandomForestCounterfactual(SklearnCounterfactual):
                 loss, loss_grad = self.build_loss(regularization, x_orig, y_target, pred, grad_mask, c, input_wrapper)
 
                 # Compute counterfactual
-                x_cf, y_cf, delta = self.compute_counterfactual_ex(x, loss, x_orig, loss_grad, optimizer, input_wrapper, False)
+                x_cf, y_cf, delta = self.compute_counterfactual_ex(x, loss, x_orig, loss_grad, optimizer, optimizer_args, input_wrapper, False)
 
                 if done(y_cf) == True:
                     if return_as_dict is True:
@@ -250,7 +254,7 @@ class RandomForestCounterfactual(SklearnCounterfactual):
         raise Exception("No counterfactual found - Consider changing parameters 'C', 'regularization', 'features_whitelist', 'optimizer' and try again")
 
 
-def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", return_as_dict=True, done=None):
+def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="nelder-mead", optimizer_args=None, return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -297,6 +301,10 @@ def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=
         Note
         ----
         The cost function of a random forest model is not differentiable - we can not use a gradient-based optimization algorithm.
+    optimizer_args : `dict`, optional
+        Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+        The default is None.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.
@@ -322,4 +330,4 @@ def randomforest_generate_counterfactual(model, x, y_target, features_whitelist=
     if optimizer == "auto":
         optimizer = "nelder-mead"
 
-    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict)
+    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, optimizer_args, return_as_dict)

@@ -148,12 +148,12 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
 
         return constraints
 
-    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
+    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict, optimizer_args):
         mad = None
         if regularization == "l1":
             mad = np.ones(x_orig.shape[0])
 
-        xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, mad=mad)
+        xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, mad=mad, optimizer_args=optimizer_args)
         delta = x_orig - xcf
 
         if self._model_predict([xcf]) != y_target:
@@ -165,7 +165,7 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
             return xcf, y_target, delta
 
 
-def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="mp", return_as_dict=True, done=None, plausibility=None):
+def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="mp", optimizer_args=None, return_as_dict=True, done=None, plausibility=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -209,6 +209,10 @@ def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, reg
         As an alternative, we can use any (custom) optimizer that is derived from the :class:`ceml.optim.optimizer.Optimizer` class.
 
         The default is "mp".
+    optimizer_args : `dict`, optional
+        Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+        The default is None.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.
@@ -241,6 +245,6 @@ def lda_generate_counterfactual(model, x, y_target, features_whitelist=None, reg
         optimizer = "mp"
 
     if plausibility is None:
-        return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
+        return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, optimizer_args, return_as_dict, done)
     else:
         raise NotImplementedError()

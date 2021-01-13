@@ -82,8 +82,8 @@ class SklearnCounterfactual(Counterfactual, ABC):
     def __build_result_dict(self, x_cf, y_cf, delta):
         return {'x_cf': x_cf, 'y_cf': y_cf, 'delta': delta}
 
-    def compute_counterfactual_ex(self, x, loss, x0, loss_grad, optimizer, input_wrapper, return_as_dict):
-        solver = prepare_optim(optimizer, loss, x0, loss_grad)
+    def compute_counterfactual_ex(self, x, loss, x0, loss_grad, optimizer, optimizer_args, input_wrapper, return_as_dict):
+        solver = prepare_optim(optimizer, loss, x0, loss_grad, optimizer_args)
 
         x_cf = input_wrapper(solver())
         y_cf = self._model_predict([x_cf])[0]
@@ -94,7 +94,7 @@ class SklearnCounterfactual(Counterfactual, ABC):
         else:
             return x_cf, y_cf, delta
 
-    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
+    def compute_counterfactual(self, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", optimizer_args=None, return_as_dict=True, done=None):
         """Computes a counterfactual of a given input `x`.
 
         Parameters
@@ -138,6 +138,10 @@ class SklearnCounterfactual(Counterfactual, ABC):
             Some models (see paper) support the use of mathematical programs for computing counterfactuals. In this case, you can use the option "mp" - please read the documentation of the corresponding model for further information.
 
             The default is "auto".
+        optimizer_args : `dict`, optional
+            Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+            The default is None.
         return_as_dict : `boolean`, optional
             If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
             If False, the results are returned as a triple.
@@ -178,7 +182,7 @@ class SklearnCounterfactual(Counterfactual, ABC):
             self.warn_if_already_done(x, done)
             
             # Compute counterfactual
-            x_cf, y_cf, delta = self.solve(x, y_target, regularization, features_whitelist, False)
+            x_cf, y_cf, delta = self.solve(x, y_target, regularization, features_whitelist, False, optimizer_args)
             
             if done(y_cf) == True:
                 if return_as_dict is True:
@@ -204,7 +208,7 @@ class SklearnCounterfactual(Counterfactual, ABC):
                 loss, loss_grad = self.build_loss(regularization, x_orig, y_target, pred, grad_mask, c, input_wrapper)
 
                 # Compute counterfactual
-                x_cf, y_cf, delta = self.compute_counterfactual_ex(x, loss, x_orig, loss_grad, optimizer, input_wrapper, False)
+                x_cf, y_cf, delta = self.compute_counterfactual_ex(x, loss, x_orig, loss_grad, optimizer, optimizer_args, input_wrapper, False)
 
                 if done(y_cf) == True:
                     if return_as_dict is True:

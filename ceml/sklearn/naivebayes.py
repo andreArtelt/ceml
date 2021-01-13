@@ -134,7 +134,7 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
 
         return [cp.trace(A @ var_X) + b @ var_x + c + self.epsilon <= 0]
 
-    def _build_solve_dcqp(self, x_orig, y_target, regularization, features_whitelist):
+    def _build_solve_dcqp(self, x_orig, y_target, regularization, features_whitelist, optimizer_args):
         x_orig_prime = self._apply_affine_preprocessing_to_const(x_orig)
 
         Q0 = np.eye(self.mymodel.dim)   # TODO: Can be ignored if regularization != l2
@@ -154,16 +154,16 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
             b_i.append((self.mymodel.means[j, :] / self.mymodel.variances[j, :]) - (self.mymodel.means[i, :] / self.mymodel.variances[i, :]))
             r_i.append(np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[j,k])) - ((self.mymodel.means[j,k]**2) / (2.*self.mymodel.variances[j,k])) for k in range(self.mymodel.dim)]) - np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[i,k])) - ((self.mymodel.means[i,k]**2) / (2.*self.mymodel.variances[i,k])) for k in range(self.mymodel.dim)]))
 
-        self.build_program(self.model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=features_whitelist, mad=None if regularization != "l1" else np.ones(self.mymodel.dim))
+        self.build_program(self.model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=features_whitelist, mad=None if regularization != "l1" else np.ones(self.mymodel.dim), optimizer_args=optimizer_args)
         
-        return DCQP.solve(self, x0=self.mymodel.means[i, :], tao=1.2, tao_max=100, mu=1.5)
+        return DCQP.solve(self, x0=self.mymodel.means[i, :])
 
-    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict):
+    def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict, optimizer_args):
         xcf = None
-        if self.mymodel.is_binary and not self.is_affine_preprocessing_set():
-            xcf = self.build_solve_opt(x_orig, y_target)
+        if self.mymodel.is_binary and not self.is_affine_preprocessing_set() and regularization != "l1":
+            xcf = self.build_solve_opt(x_orig, y_target, optimizer_args)
         else:
-            xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist)
+            xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist, optimizer_args)
         delta = x_orig - xcf
 
         if self._model_predict([xcf]) != y_target:
@@ -175,7 +175,7 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
             return xcf, y_target, delta
 
 
-def gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", return_as_dict=True, done=None):
+def gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=None, regularization="l1", C=1.0, optimizer="auto", optimizer_args=None, return_as_dict=True, done=None):
     """Computes a counterfactual of a given input `x`.
 
     Parameters
@@ -223,6 +223,10 @@ def gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=No
         Gaussian naive Bayes supports the use of mathematical programs for computing counterfactuals - set `optimizer` to "mp" for using a semi-definite program (binary classifier) or a DCQP (otherwise) for computing the counterfactual.
         Note that in this case the hyperparameter `C` is ignored.
         Because the DCQP is a non-convex problem, we are not guaranteed to find the best solution (it might even happen that we do not find a solution at all) - we use the penalty convex-concave procedure for approximately solving the DCQP.
+    optimizer_args : `dict`, optional
+        Dictionary for overriding the default hyperparameters of the optimization algorithm.
+
+        The default is None.
     return_as_dict : `boolean`, optional
         If True, returns the counterfactual, its prediction and the needed changes to the input as dictionary.
         If False, the results are returned as a triple.
@@ -251,4 +255,4 @@ def gaussiannb_generate_counterfactual(model, x, y_target, features_whitelist=No
         else:
             optimizer = "nelder-mead"
 
-    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, return_as_dict, done)
+    return cf.compute_counterfactual(x, y_target, features_whitelist, regularization, C, optimizer, optimizer_args, return_as_dict, done)
