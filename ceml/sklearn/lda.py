@@ -156,7 +156,7 @@ class LdaCounterfactual(SklearnCounterfactual, MathematicalProgram, ConvexQuadra
         xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, mad=mad, optimizer_args=optimizer_args)
         delta = x_orig - xcf
 
-        if self._model_predict([xcf]) != y_target:
+        if self._model_predict([self._apply_affine_preprocessing_to_const(xcf)]) != y_target:
             raise Exception("No counterfactual found - Consider changing parameters 'regularization', 'features_whitelist', 'optimizer' and try again")
 
         if return_as_dict is True:

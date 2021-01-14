@@ -159,7 +159,7 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
             b_i.append(np.dot(self.mymodel.sigma_inv[j], self.mymodel.means[j]) - np.dot(self.mymodel.sigma_inv[i], self.mymodel.means[i]))
             r_i.append(np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + .5 * np.log(np.linalg.det(self.mymodel.sigma_inv[j]) / np.linalg.det(self.mymodel.sigma_inv[i])) + .5 * (self.mymodel.means[i].T.dot(self.mymodel.sigma_inv[i]).dot(self.mymodel.means[i]) - self.mymodel.means[j].T.dot(self.mymodel.sigma_inv[j]).dot(self.mymodel.means[j])))
 
-        self.build_program(self.model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=features_whitelist, mad=None if regularization != "l1" else np.ones(self.mymodel.dim), optimizer_args=optimizer_args)
+        self.build_program(self.model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=features_whitelist, mad=None if regularization != "l1" else np.ones(x_orig.shape[0]), optimizer_args=optimizer_args)
         
         return DCQP.solve(self, x0=self.mymodel.means[i])
 

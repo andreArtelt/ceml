@@ -181,7 +181,7 @@ class CQPHelper(ConvexQuadraticProgram):
     def solve(self, target_prototype, features_whitelist=None):
         self.target_prototype = target_prototype
         
-        return self.build_solve_opt(self.x_orig, self.y_target, features_whitelist, mad=None if self.regularization != "l1" else np.ones(self.mymodel.dim), optimizer_args=self.optimizer_args)
+        return self.build_solve_opt(self.x_orig, self.y_target, features_whitelist, mad=None if self.regularization != "l1" else np.ones(self.x_orig.shape[0]), optimizer_args=self.optimizer_args)
 
 
 class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
@@ -220,8 +220,10 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         xcf_dist = float("inf")
 
         dist = lambda x: np.linalg.norm(x - x_orig, 2)
+        dist_ = lambda x: np.linalg.norm(x - self._apply_affine_preprocessing_to_const(x_orig), 2)
         if regularization == "l1":
             dist = lambda x: np.sum(np.abs(x - x_orig))
+            dist_ = lambda x: np.sum(np.abs(x - self._apply_affine_preprocessing_to_const(x_orig)))
         
         # Search for suitable prototypes
         target_prototypes = []
@@ -238,7 +240,9 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         for i in range(len(target_prototypes)):
             try:
                 xcf_ = solver.solve(target_prototype=i, features_whitelist=features_whitelist)
-                ycf_ = self.mymodel.model.predict([xcf_])[0]
+                if xcf_ is None:
+                    raise Exception("Optimization algorithm failed - program might be infeasible.\nRerun with 'sovler_verbosity=True' and check the output.")
+                ycf_ = self.mymodel.model.predict([self._apply_affine_preprocessing_to_const(xcf_)])[0]
 
                 if ycf_ == y_target:
                     if dist(xcf_) < xcf_dist:
@@ -249,8 +253,11 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
     
         if xcf is None:
             # It might happen that the solver (for a specific set of parameter values) does not find a counterfactual, although the feasible region is always non-empty
-            j = np.argmin([dist(self.mymodel.prototypes[proto]) for proto in target_prototypes]) # Select the nearest prototype!
-            xcf = self.mymodel.prototypes[j]
+            if self.is_affine_preprocessing_set() is False:
+                j = np.argmin([dist_(self.mymodel.prototypes[proto]) for proto in target_prototypes]) # Select the nearest prototype!
+                xcf = self.mymodel.prototypes[j]
+            else:
+                raise Exception("Did not find a counterfactual")  # Note: In case of an affine preprocessing, we can not simply select a prototype as a counterfactual!
 
         return xcf
 
@@ -290,7 +297,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         
         self.build_program(self.model, x_orig, y_target, Q0, Q1, q, c, A0_i, A1_i, b_i, r_i, features_whitelist=features_whitelist, mad=None if regularization != "l1" else np.ones(self.mymodel.dim))
 
-        return DCQP.solve(self, x0=p_i, tao=1.2, tao_max=100, mu=1.5)
+        return DCQP.solve(self, x0=p_i)
 
     def _compute_counterfactual_via_dcqp(self, x_orig, y_target, features_whitelist, regularization, optimizer_args):
         xcf = None
@@ -313,7 +320,7 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
         for i in range(len(target_prototypes)):
             try:
                 xcf_ = self._build_solve_dcqp(x_orig, y_target, i, other_prototypes, features_whitelist, regularization)
-                ycf_ = self.model.predict([xcf_])[0]
+                ycf_ = self.model.predict([self._apply_affine_preprocessing_to_const(xcf_)])[0]
 
                 if ycf_ == y_target:
                     if dist(xcf_) < xcf_dist:
@@ -324,8 +331,11 @@ class LvqCounterfactual(SklearnCounterfactual, MathematicalProgram, DCQP):
     
         if xcf is None:
             # It might happen that the solver (for a specific set of parameter values) does not find a counterfactual, although the feasible region is always non-empty
-            j = np.argmin([dist(self.mymodel.prototypes[proto]) for proto in target_prototypes]) # Select the nearest prototype!
-            xcf = self.mymodel.prototypes[j]
+            if self.is_affine_preprocessing_set() is False:
+                j = np.argmin([dist(self.mymodel.prototypes[proto]) for proto in target_prototypes]) # Select the nearest prototype!
+                xcf = self.mymodel.prototypes[j]
+            else:
+                raise Exception("Did not find a counterfactual")  # Note: In case of an affine preprocessing, we can not simply select a prototype as a counterfactual!
 
         return xcf
 

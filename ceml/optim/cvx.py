@@ -64,7 +64,7 @@ class SupportAffinePreprocessing():
         return {"A": self.A, "b": self.b}
 
     def is_affine_preprocessing_set(self):
-        return self.A is None or self.b is None
+        return self.A is not None and self.b is not None
 
     def _apply_affine_preprocessing_to_var(self, var_x):
         if self.A is not None and self.b is not None:
@@ -90,6 +90,7 @@ class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
     def __init__(self, **kwds):
         self.epsilon = 1e-2
         self.solver = cp.SCS
+        self.solver_verbosity = False
 
         super().__init__(**kwds)
 
@@ -112,7 +113,7 @@ class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
         raise NotImplementedError()
 
     def _solve(self, prob):
-        prob.solve(solver=self.solver, verbose=False)
+        prob.solve(solver=self.solver, verbose=self.solver_verbosity)
 
     def build_solve_opt(self, x_orig, y, features_whitelist=None, mad=None, optimizer_args=None):
         """Builds and solves the convex quadratic optimization problem.
@@ -152,6 +153,8 @@ class ConvexQuadraticProgram(ABC, SupportAffinePreprocessing):
                 self.epsilon = optimizer_args["epsilon"]
             if "solver" in optimizer_args:
                 self.solver = cvx_desc_to_solver(optimizer_args["solver"])
+            if "solver_verbosity" in optimizer_args:
+                self.solver_verbosity = optimizer_args["solver_verbosity"]
 
         dim = x_orig.shape[0]
         
@@ -218,6 +221,7 @@ class SDP(ABC):
     def __init__(self, **kwds):
         self.epsilon = 1e-2
         self.solver = cp.SCS
+        self.solver_verbosity = False
 
         super().__init__(**kwds)
     
@@ -242,7 +246,7 @@ class SDP(ABC):
         raise NotImplementedError()
     
     def _solve(self, prob):
-        prob.solve(solver=self.solver, verbose=False)
+        prob.solve(solver=self.solver, verbose=self.solver_verbosity)
 
     def build_solve_opt(self, x_orig, y, features_whitelist=None, optimizer_args=None):
         """Builds and solves the SDP.
@@ -276,6 +280,8 @@ class SDP(ABC):
                 self.epsilon = optimizer_args["epsilon"]
             if "solver" in optimizer_args:
                 self.solver = cvx_desc_to_solver(optimizer_args["solver"])
+            if "solver_verbosity" in optimizer_args:
+                self.solver_verbosity = optimizer_args["solver_verbosity"]
 
         dim = x_orig.shape[0]
 
@@ -418,6 +424,7 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
         self.mu = 1.5
 
         self.solver = cp.SCS
+        self.solver_verbosity = False
 
         if optimizer_args is not None:
             if "epsilon" in optimizer_args:
@@ -430,6 +437,8 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
                 self.mu = optimizer_args["mu"]
             if "solver" in optimizer_args:
                 self.solver = cvx_desc_to_solver(optimizer_args["solver"])
+            if "solver_verbosity" in optimizer_args:
+                self.solver_verbosity = optimizer_args["solver_verbosity"]
         
         if not(len(self.A0s) == len(self.A1s) and len(self.A0s) == len(self.bs) and len(self.rs) == len(self.bs)):
             raise ValueError("Inconsistent number of constraint parameters")
@@ -437,7 +446,7 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
         super().__init__(**kwds)
 
     def _solve(self, prob):
-        prob.solve(solver=self.solver, verbose=False)
+        prob.solve(solver=self.solver, verbose=self.solver_verbosity)
 
     def solve_aux(self, xcf, tao, x_orig):
         try:
@@ -459,7 +468,7 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
             for i in range(len(self.A0s)):
                 A = cp.quad_form(var_x_prime, self.A0s[i])
                 q = var_x_prime.T @ self.bs[i]
-                c = self.rs[i] + np.dot(xcf, np.dot(xcf, self.A1s[i])) - 2. * var_x.T @ np.dot(xcf, self.A1s[i]) - s[i]
+                c = self.rs[i] + np.dot(xcf, np.dot(xcf, self.A1s[i])) - 2. * var_x_prime.T @ np.dot(xcf, self.A1s[i]) - s[i]
 
                 constraints.append(A + q + c + self.epsilon <= 0)
             
@@ -516,10 +525,14 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
 
         # Solve a bunch of CCPs
         while cur_tao < self.tao_max:
-            xcf_ = self.solve_aux(xcf, cur_tao, x_orig)
+            cur_xcf = xcf
+            if cur_xcf.shape == x_orig.shape:   # Apply transformation is necessary - xcf is computed in the original space which can be different from the space the model works on!
+                cur_xcf = self._apply_affine_preprocessing_to_const(cur_xcf)
+
+            xcf_ = self.solve_aux(cur_xcf, cur_tao, x_orig)
             xcf = xcf_
 
-            if y_target == self.model.predict([xcf_])[0]:
+            if y_target == self.model.predict([self._apply_affine_preprocessing_to_const(xcf_)])[0]:
                 break
 
             # Increase penalty parameter
