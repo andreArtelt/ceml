@@ -132,6 +132,11 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
         b = (self.mymodel.means[j, :] / self.mymodel.variances[j, :]) - (self.mymodel.means[i, :] / self.mymodel.variances[i, :])
         c = np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[j,k])) - ((self.mymodel.means[j,k]**2) / (2.*self.mymodel.variances[j,k])) for k in range(self.mymodel.dim)]) - np.sum([np.log(1. / np.sqrt(2.*np.pi*self.mymodel.variances[i,k])) - ((self.mymodel.means[i,k]**2) / (2.*self.mymodel.variances[i,k])) for k in range(self.mymodel.dim)])
 
+        if self.is_affine_preprocessing_set():  # If necessary, apply affine preprocessing
+            c = c + self.b.T @ b + self.b.T @ A @ self.b
+            b = self.A.T @ b + (self.b.T @ A @ self.A).T + self.A.T @ A @ self.b
+            A = self.A.T @ A @ self.A
+
         return [cp.trace(A @ var_X) + b @ var_x + c + self.epsilon <= 0]
 
     def _build_solve_dcqp(self, x_orig, y_target, regularization, features_whitelist, optimizer_args):
@@ -160,8 +165,8 @@ class GaussianNbCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, 
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict, optimizer_args):
         xcf = None
-        if self.mymodel.is_binary and not self.is_affine_preprocessing_set() and regularization != "l1":
-            xcf = self.build_solve_opt(x_orig, y_target, optimizer_args)
+        if self.mymodel.is_binary and regularization != "l1":
+            xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, optimizer_args)
         else:
             xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist, optimizer_args)
         delta = x_orig - xcf

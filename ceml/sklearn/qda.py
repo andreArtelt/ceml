@@ -137,6 +137,11 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
         b = np.dot(self.mymodel.sigma_inv[j], self.mymodel.means[j]) - np.dot(self.mymodel.sigma_inv[i], self.mymodel.means[i])
         c = np.log(self.mymodel.class_priors[j] / self.mymodel.class_priors[i]) + 0.5 * np.log(np.linalg.det(self.mymodel.sigma_inv[j]) / np.linalg.det(self.mymodel.sigma_inv[i])) + 0.5 * (self.mymodel.means[i].T.dot(self.mymodel.sigma_inv[i]).dot(self.mymodel.means[i]) - self.mymodel.means[j].T.dot(self.mymodel.sigma_inv[j]).dot(self.mymodel.means[j]))
 
+        if self.is_affine_preprocessing_set():  # If necessary, apply affine preprocessing
+            c = c + self.b.T @ b + self.b.T @ A @ self.b
+            b = self.A.T @ b + (self.b.T @ A @ self.A).T + self.A.T @ A @ self.b
+            A = self.A.T @ A @ self.A
+
         return [cp.trace(A @ var_X) + var_x.T @ b + c + self.epsilon <= 0]
 
     def _build_solve_dcqp(self, x_orig, y_target, regularization, features_whitelist, optimizer_args):
@@ -165,7 +170,7 @@ class QdaCounterfactual(SklearnCounterfactual, MathematicalProgram, SDP, DCQP):
 
     def solve(self, x_orig, y_target, regularization, features_whitelist, return_as_dict, optimizer_args):   
         xcf = None
-        if self.mymodel.is_binary and not self.is_affine_preprocessing_set() and regularization != "l1":
+        if self.mymodel.is_binary and regularization != "l1":
             xcf = self.build_solve_opt(x_orig, y_target, features_whitelist, optimizer_args)
         else:
             xcf = self._build_solve_dcqp(x_orig, y_target, regularization, features_whitelist, optimizer_args)
