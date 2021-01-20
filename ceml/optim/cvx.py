@@ -495,7 +495,7 @@ class PenaltyConvexConcaveProcedure(SupportAffinePreprocessing):
             if self.mad is not None:    # TODO: Right now, mad != 1 is not supported.
                 f = cp.Minimize(cp.norm(var_x - x_orig, 1) + s.T @ (tao*s_c))
             else:
-                f = cp.Minimize(cp.quad_form(var_x, self.Q0) + self.q.T @ var_x + self.c + np.dot(xcf, np.dot(xcf, self.Q1)) - 2. * var_x.T @ np.dot(xcf, self.Q1) + s.T @ (tao*s_c))
+                f = cp.Minimize(cp.quad_form(var_x_prime, self.Q0) + self.q.T @ var_x_prime + self.c + np.dot(xcf, np.dot(xcf, self.Q1)) - 2. * var_x_prime.T @ np.dot(xcf, self.Q1) + s.T @ (tao*s_c))
             constraints += [s >= s_z]
         
             prob = cp.Problem(f, constraints)
