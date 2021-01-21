@@ -20,7 +20,7 @@ How can I cite CEML?
         @misc{ceml,
                 author = {André Artelt},
                 title = {CEML: Counterfactuals for Explaining Machine Learning models - A Python toolbox},
-                year = {2019 - 2020},
+                year = {2019 - 2021},
                 publisher = {GitHub},
                 journal = {GitHub repository},
                 howpublished = {\url{https://www.github.com/andreArtelt/ceml}}

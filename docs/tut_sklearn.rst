@@ -49,3 +49,16 @@ A complete example of a classification pipeline with the standard scaler :class:
 
 .. literalinclude:: examples/sklearn_pipeline.py
     :linenos:
+
+
+Change optimization parameters
+++++++++++++++++++++++++++++++
+
+Sometimes it might become necessary to change to default parameters of the optimization methods - e.g. changing the solver, the maximum number of iterations, etc.
+This can be done by passing the optional argument `optimizer_args` to the :func:`ceml.sklearn.models.generate_counterfactual` function.
+The value of `optimizer_args` must be a dictionary where some parameters like verbosity, solver, maximum number of iterations, tolerance thresholds, etc. can be changed - note that not all parameters are used by every optimization algorithm (e.g. "epsilon", "solver" and "solver_verbosity" are only used if `optimizer="mp"`).
+
+A short code snippet demonstrating how to change some optimization parameters is given below:
+
+.. literalinclude:: examples/sklearn_opt_args.py
+    :linenos:
