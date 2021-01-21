@@ -129,7 +129,7 @@ class TorchOptimizer(Optimizer):
 
 def prepare_optim(optimizer, optimizer_args, lr_scheduler, lr_scheduler_args, loss, loss_npy, loss_grad_npy, x_orig, model, tol, max_iter, grad_mask, device):
     if isinstance(optimizer, str) or isinstance(optimizer, Optimizer):
-        return desc_to_optim_scipy(optimizer, loss_npy, x_orig, loss_grad_npy, tol, max_iter)
+        return desc_to_optim_scipy(optimizer, loss_npy, x_orig, loss_grad_npy, optimizer_args={"max_iter": max_iter, "tol": tol})
     elif inspect.isclass(optimizer) == True:
         optim = TorchOptimizer()
         optim.init(model, loss, x_orig, optimizer, optimizer_args, lr_scheduler, lr_scheduler_args, tol, max_iter, grad_mask, device)
