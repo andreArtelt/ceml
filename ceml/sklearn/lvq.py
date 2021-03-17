@@ -173,7 +173,7 @@ class CQPHelper(ConvexQuadraticProgram):
         for k in range(len(self.other_prototypes)):
             p_j = self.other_prototypes[k]
             qj = np.dot(Omega, p_j - p_i)
-            bj = -.5 * (np.dot(p_i, np.dot(Omega, p_i)) - np.dot(p_j, np.dot(Omega, p_j)))
+            bj = .5 * (np.dot(p_i, np.dot(Omega, p_i)) - np.dot(p_j, np.dot(Omega, p_j)))
             results.append(qj.T @ var_x_prime + bj + self.epsilon <= 0)
 
         return results
