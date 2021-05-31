@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import tensorflow as tf
 import numpy as np
-import inspect
 from ..layer import create_tensor, create_mutable_tensor
 from ....optim import Optimizer
 from ....optim import prepare_optim as desc_to_optim_scipy
@@ -111,7 +110,7 @@ class TfOptimizer(Optimizer):
 
 def prepare_optim(optimizer, loss, loss_npy, loss_grad_npy, x_orig, model, tol, max_iter, grad_mask):
     if isinstance(optimizer, str) or isinstance(optimizer, Optimizer):
-        return desc_to_optim_scipy(optimizer, loss_npy, x_orig, loss_grad_npy, tol, max_iter)
+        return desc_to_optim_scipy(optimizer, loss_npy, x_orig, loss_grad_npy, {"max_iter": max_iter, "tol": tol})
     elif isinstance(optimizer, tf.compat.v1.train.Optimizer):
         optim = TfOptimizer()
         optim.init(model, loss, x_orig, optimizer, tol, max_iter, grad_mask)
