@@ -5,5 +5,5 @@ jaxlib==0.1.55
 cvxpy==1.1.0
 scikit-learn==0.24.0
 sklearn-lvq==1.1.1
-tensorflow==2.5.0
+tensorflow==2.5.1
 torch==1.7.1
