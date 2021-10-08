@@ -231,6 +231,12 @@ class DecisionTreeCounterfactual(SklearnCounterfactual, PlausibleCounterfactualO
         elif not callable(regularization):
             raise TypeError("'regularization' has to be either callable or a valid description of a supported regularization")
 
+        # Classification only: Scikit-learn does not allow negative integers as class labels or jumps between class label numbers and convertes them internally into non-negative class labels.
+        if is_classifier is True:
+            y_interal = range(self.model.n_classes_)
+            if np.any(y_interal != self.model.classes_):  # Handle potential inconsistencies between internal and external representation of class labels
+                y_target = y_interal[list(self.model.classes_).index(y_target)]
+
         # Collect all leafs
         leafs = get_leafs_from_tree(self.model.tree_, classifier=is_classifier)
 
