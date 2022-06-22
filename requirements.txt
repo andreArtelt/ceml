@@ -1,4 +1,4 @@
-numpy==1.19.5
+numpy==1.22.0
 scipy==1.4.1
 jax==0.2.17
 jaxlib==0.1.69
