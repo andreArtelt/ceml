@@ -6,7 +6,7 @@ import numpy as np
 import random
 random.seed(424242)
 import sklearn
-from sklearn.datasets import load_iris, load_boston
+from sklearn.datasets import load_iris, load_diabetes
 from sklearn.neighbors import KernelDensity
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -124,7 +124,7 @@ def test_decisiontree_classifier():
 
 def test_decisiontree_regressor():
     # Load data
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -135,10 +135,10 @@ def test_decisiontree_regressor():
     # Select data point for explaining its prediction
     x_orig = X_test[1:4][0,:]
     y_orig_pred = model.predict([x_orig])
-    assert y_orig_pred >= 19. and y_orig_pred < 21.
+    assert y_orig_pred >= 80. and y_orig_pred < 90.
 
     # Compute counterfactual
-    y_target = 25.
+    y_target = 95.
     y_target_done = lambda z: np.abs(z - y_target) < 1.
 
     features_whitelist = None

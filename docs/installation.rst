@@ -6,7 +6,7 @@ Installation
 
 .. note::
 
-    Python 3.6 or higher is required!
+    Python 3.8 is required!
 
 PyPi
 ====

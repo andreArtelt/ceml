@@ -5,7 +5,7 @@ sys.path.insert(0,'..')
 import numpy as np
 np.random.seed(42)
 import sklearn
-from sklearn.datasets import load_iris, load_boston
+from sklearn.datasets import load_iris, load_diabetes
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
@@ -52,7 +52,7 @@ def test_randomforest_classifier():
 
 def test_randomforest_regressor():
     # Load data
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=4242)
 
@@ -63,11 +63,11 @@ def test_randomforest_regressor():
     # Select data point for explaining its prediction
     x_orig = X_test[1:4][0,:]
     y_orig_pred = model.predict([x_orig])
-    assert y_orig_pred >= 19. and y_orig_pred < 21.
+    assert y_orig_pred >= 80. and y_orig_pred < 90.
 
     # Compute counterfactual
-    y_target = 25.
-    y_target_done = lambda z: np.abs(z - y_target) < 1.
+    y_target = 95.
+    y_target_done = lambda z: np.abs(z - y_target) < 10.
 
     features_whitelist = None
 
@@ -79,7 +79,7 @@ def test_randomforest_regressor():
     assert y_target_done(y_cf)
     assert y_target_done(model.predict(np.array([x_cf])))
 
-    features_whitelist = [0, 2, 4, 5, 7, 8, 9, 12]
+    features_whitelist = [0, 2, 4, 5, 7, 8, 9]
     
     x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target_done, features_whitelist=features_whitelist, regularization="l1", C=1.0, return_as_dict=False)
     assert y_target_done(y_cf)

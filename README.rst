@@ -9,16 +9,16 @@ CEML is a Python toolbox for computing counterfactuals. Counterfactuals can be u
 
 It supports many common machine learning frameworks:
 
-    - scikit-learn (0.24.2)
-    - PyTorch (1.7.1)
-    - Keras & Tensorflow (2.5.2)
+    - scikit-learn (1.3.1)
+    - PyTorch (2.0.1)
+    - Keras & Tensorflow (2.13.1)
 
 Furthermore, CEML is easy to use and can be extended very easily. See the following user guide for more information on how to use and extend CEML.
 
 Installation
 ------------
 
-**Note: Python 3.6 or higher is required!**
+**Note: Python 3.8 is required!**
 
 PyPI
 ++++
@@ -107,7 +107,7 @@ How to cite?
         @misc{ceml,
                 author = {André Artelt},
                 title = {CEML: Counterfactuals for Explaining Machine Learning models - A Python toolbox},
-                year = {2019 - 2021},
+                year = {2019 - 2023},
                 publisher = {GitHub},
                 journal = {GitHub repository},
                 howpublished = {\url{https://www.github.com/andreArtelt/ceml}}

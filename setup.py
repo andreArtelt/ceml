@@ -20,7 +20,7 @@ setup(name='ceml',
       author='André Artelt',
       author_email='aartelt@techfak.uni-bielefeld.de',
       license='MIT',
-      python_requires='>=3.6',
+      python_requires='>=3.8',
       packages=find_packages(),
       include_package_data=True,
       classifiers=[
@@ -28,7 +28,7 @@ setup(name='ceml',
           'Intended Audience :: Science/Research',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: MIT License',
-          'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.8',
           'Topic :: Scientific/Engineering :: Artificial Intelligence'
           ],
       zip_safe=False)

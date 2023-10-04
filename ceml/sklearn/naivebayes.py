@@ -40,7 +40,7 @@ class GaussianNB(ModelWithLoss):
 
         self.class_priors = model.class_prior_
         self.means = model.theta_
-        self.variances = model.sigma_
+        self.variances = model.var_
 
         self.dim = self.means.shape[1]
         self.is_binary = self.means.shape[0] == 2

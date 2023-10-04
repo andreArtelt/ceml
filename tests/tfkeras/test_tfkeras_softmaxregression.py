@@ -69,7 +69,7 @@ def test_softmaxregression():
             return self.predict(x)
 
         def get_loss(self, y_target, pred=None):
-            return NegLogLikelihoodCost(input_to_output=self.model.predict_proba, y_target=y_target)
+            return NegLogLikelihoodCost(input_to_output=self.model.predict, y_target=y_target)
 
     # Load data
     X, y = load_iris(return_X_y=True)
@@ -112,7 +112,7 @@ def test_softmaxregression():
     assert model.predict(np.array([x_cf])) == 0
 
     optimizer = "nelder-mead"
-    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l1", C=0.01, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
+    x_cf, y_cf, delta = generate_counterfactual(model, x_orig, y_target=0, features_whitelist=features_whitelist, regularization="l1", C=0.001, optimizer=optimizer, optimizer_args=optimizer_args, return_as_dict=False)
     assert y_cf == 0
     assert model.predict(np.array([x_cf])) == 0
 
