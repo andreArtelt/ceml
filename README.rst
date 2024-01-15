@@ -20,6 +20,8 @@ Installation
 
 **Note: Python 3.8 is required!**
 
+Tested on Ubuntu -- note that some people reported problems with some dependencies on Windows!
+
 PyPI
 ++++
 
