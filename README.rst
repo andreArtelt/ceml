@@ -15,6 +15,8 @@ It supports many common machine learning frameworks:
 
 Furthermore, CEML is easy to use and can be extended very easily. See the following user guide for more information on how to use and extend CEML.
 
+.. image:: docs/_static/cf_illustration.png
+
 Installation
 ------------
 
